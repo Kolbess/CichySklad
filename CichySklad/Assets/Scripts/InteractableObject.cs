@@ -1,32 +1,36 @@
-using System;
 using UnityEngine;
 
 public class InteractableObject : MonoBehaviour
 {
-    private Collider2D _collider;
+    private static readonly int OutlineEnabled = Shader.PropertyToID("_OutlineEnabled");
+    private AudioSource _audioSource;
     private bool _isInteracted;
-    
+    [SerializeField] private float cooldown;
+    private SpriteRenderer _spriteRenderer;
+    private Material _material;
+
     private void Start()
     {
-        _collider = GetComponent<Collider2D>();
+        _audioSource = GetComponent<AudioSource>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        _material = _spriteRenderer.material;
     }
 
-    public void DisableCollider()
+    private void PlaySound()
     {
-        _collider.enabled = false;
+        _audioSource.Play();
+    }
+
+    private void EnableOutline()
+    {
+        _material.SetInt(OutlineEnabled, 1);
     }
     
-    public void EnableCollider()
+    private void DisableOutline()
     {
-        _collider.enabled = true;
+        _material.SetInt(OutlineEnabled, 0);
     }
-
-    public void Interact()
-    {
-        EnableCollider();
-        _isInteracted = true;
-    }
-
+    
     private void TakeAnimation()
     {
         transform.localScale = new Vector3(1.1f, 1.1f, 1.1f);
@@ -41,11 +45,13 @@ public class InteractableObject : MonoBehaviour
     {
         Debug.Log("OnMouseDown");
         TakeAnimation();
+        PlaySound();
     }
 
     private void OnMouseUp()
     {
         DropAnimation();
+        PlaySound();
     }
 
     private void OnMouseDrag()
@@ -54,5 +60,15 @@ public class InteractableObject : MonoBehaviour
         mousePos.z = 10;
         if (Camera.main != null) transform.position = Camera.main.ScreenToWorldPoint(mousePos);
         Debug.Log($"x: {Input.mousePosition.x}, y: {Input.mousePosition.y}, ox: {transform.position.x}, oy: {transform.position.y}");
+    }
+
+    private void OnMouseEnter()
+    {
+        EnableOutline();
+    }
+    
+    private void OnMouseExit()
+    {
+        DisableOutline();
     }
 }
