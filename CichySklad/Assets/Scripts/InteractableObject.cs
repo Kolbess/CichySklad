@@ -46,6 +46,12 @@ public class InteractableObject : MonoBehaviour
         Debug.Log("OnMouseDown");
         TakeAnimation();
         PlaySound();
+        
+        // Increase risk when interacting (simulating noise/activity)
+        if (RiskManager.Instance != null)
+        {
+            RiskManager.Instance.AddRisk(10f);
+        }
     }
 
     private void OnMouseUp()
