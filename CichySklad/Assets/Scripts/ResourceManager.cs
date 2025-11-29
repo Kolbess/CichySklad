@@ -1,8 +1,11 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ResourceManager : MonoBehaviour
 {
+    public static ResourceManager Instance;
+    
     private static readonly int NoResource = Animator.StringToHash("NoResource");
     [SerializeField] private GameObject noPaperWarning;
     [SerializeField] private GameObject noInkWarning;
@@ -61,6 +64,24 @@ public class ResourceManager : MonoBehaviour
     private int _money;
     [SerializeField] private TextMeshProUGUI moneyText;
 
+    public int trust
+    {
+        get => _trust;
+        set
+        {
+            _trust = value;
+            UpdateTrust();
+        }
+    }
+    private int _trust;
+    [SerializeField] private Slider trustSlider;
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+    
     private void Start()
     {
         UpdatePaper();
@@ -91,6 +112,11 @@ public class ResourceManager : MonoBehaviour
     private void UpdateMoney()
     {
         moneyText.text = $"{_money}";
+    }
+
+    private void UpdateTrust()
+    {
+        trustSlider.value = _trust / 100f;
     }
 
     public bool TrySpend(int costPaper = 0, int costInk = 0, int costLeaflets = 0, int costMoney = 0)
@@ -162,7 +188,7 @@ public class ResourceManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            TrySpend(costPaper: 1, costInk: 1, costLeaflets: 1, costMoney: 1);
+            EventSystem.RumorsSpread();
         }
     }
     
