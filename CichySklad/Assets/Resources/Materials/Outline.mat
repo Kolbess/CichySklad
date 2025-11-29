@@ -58,9 +58,9 @@ Material:
     - _OutlineMode: 0
     - _OutlinePosition: 1
     - _OutlineShape: 0
-    - _Thickness: 10
+    - _Thickness: 0.5
     - _TileMode: 0
-    - _Weight: 0.5
+    - _Weight: 0.415
     - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
