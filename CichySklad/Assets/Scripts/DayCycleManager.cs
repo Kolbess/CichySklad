@@ -76,7 +76,28 @@ public class DayCycleManager : MonoBehaviour
             ResourceManager.Instance.ResetDailyStats();
         }
 
+        currentTime = 0f;
+        isDayActive = true;
+
         Debug.Log($"Day {CurrentDay} Started. Phase: {CurrentPhase}. Targets: Hide {TargetLeafletsToHide}, Send {TargetLeafletsToSend}");
+    }
+
+    private float currentTime;
+    private bool isDayActive;
+
+    public float CurrentTime => currentTime;
+    public float DayDurationSeconds => dayDurationSeconds;
+
+    private void Update()
+    {
+        if (isDayActive)
+        {
+            currentTime += Time.deltaTime;
+            if (currentTime >= dayDurationSeconds)
+            {
+                EndWork();
+            }
+        }
     }
 
     public void StartWork()
@@ -92,6 +113,7 @@ public class DayCycleManager : MonoBehaviour
     {
         if (CurrentPhase != DayPhase.Work) return;
 
+        isDayActive = false;
         CurrentPhase = DayPhase.Evening;
         OnPhaseChanged?.Invoke(CurrentPhase);
         Debug.Log($"Phase Changed: {CurrentPhase}");

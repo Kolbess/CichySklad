@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,11 @@ public class DayCycleUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI eveningSummaryText;
     [SerializeField] private Sprite neighborPortrait;
 
+    [Header("Background Visuals")]
+    [SerializeField] private Image uiBackgroundImage;
+    [SerializeField] private SpriteRenderer worldBackgroundRenderer;
+    [SerializeField] private List<Sprite> daysprites;
+
     private void Start()
     {
         if (DayCycleManager.Instance != null)
@@ -36,6 +42,13 @@ public class DayCycleUI : MonoBehaviour
         if (dialogueSystem == null)
         {
             dialogueSystem = FindObjectOfType<DialogueSystem>();
+        }
+
+        // Initialize background
+        if (DayCycleManager.Instance != null)
+        {
+            // Force update to initial state immediately
+            UpdateBackgroundSprite(0); 
         }
     }
 
@@ -68,6 +81,8 @@ public class DayCycleUI : MonoBehaviour
 
     private void HandlePhaseChanged(DayPhase phase)
     {
+        UpdateBackground(phase);
+
         switch (phase)
         {
             case DayPhase.Work:
@@ -84,7 +99,7 @@ public class DayCycleUI : MonoBehaviour
         }
     }
 
-    private void HandleDayEnded()
+    public void HandleDayEnded()
     {
         // Show final "Day Ended" screen or fade out
         dayTransitionPanel.SetActive(true);
@@ -185,4 +200,69 @@ public class DayCycleUI : MonoBehaviour
         };
         return messages[Random.Range(0, messages.Length)];
     }
-}
+
+
+    private void Update()
+    {
+        if (DayCycleManager.Instance != null && daysprites != null && daysprites.Count > 0)
+        {
+            float progress = Mathf.Clamp01(DayCycleManager.Instance.CurrentTime / DayCycleManager.Instance.DayDurationSeconds);
+            
+            // Map progress (0.0 to 1.0) to sprite index (0 to Count-1)
+            // We want the last sprite to show when progress is near 1.0, so we use (Count) * progress and clamp
+            int spriteIndex = Mathf.FloorToInt(progress * daysprites.Count);
+            spriteIndex = Mathf.Clamp(spriteIndex, 0, daysprites.Count - 1);
+
+            UpdateBackgroundSprite(spriteIndex);
+        }
+    }
+
+    private void UpdateBackgroundSprite(int index)
+    {
+        if (daysprites == null || daysprites.Count == 0)
+        {
+            Debug.LogWarning("DayCycleUI: Daysprites list is empty!");
+            return;
+        }
+
+        if (index < 0 || index >= daysprites.Count)
+        {
+            Debug.LogWarning($"DayCycleUI: Invalid sprite index {index}");
+            return;
+        }
+
+        Sprite targetSprite = daysprites[index];
+        
+        if (uiBackgroundImage != null)
+        {
+            if (uiBackgroundImage.sprite != targetSprite)
+            {
+                uiBackgroundImage.sprite = targetSprite;
+                Debug.Log($"DayCycleUI: Changed UI sprite to index {index}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("DayCycleUI: Ui Background Image is not assigned!");
+        }
+            
+        if (worldBackgroundRenderer != null)
+        {
+            if (worldBackgroundRenderer.sprite != targetSprite)
+            {
+                worldBackgroundRenderer.sprite = targetSprite;
+                Debug.Log($"DayCycleUI: Changed World sprite to index {index}");
+            }
+        }
+    }
+
+    // Kept for compatibility if needed, but visuals are now driven by Update
+    private void UpdateBackground(DayPhase phase)
+    {
+        // Optional: Could force a specific sprite for Night/Evening if logic dictates, 
+        // but user wants time-based. We'll leave this empty or remove it to avoid conflict.
+    }
+
+
+    }
+

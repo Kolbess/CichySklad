@@ -9,6 +9,7 @@ public class MainMenuUiManager : MonoBehaviour
 
     [Header("UI Elements")]
     [SerializeField] private GameObject instructionsPanel;
+    [SerializeField] private GameObject mainMenuButtons;
 
     private void Start()
     {
@@ -17,6 +18,10 @@ public class MainMenuUiManager : MonoBehaviour
         if (instructionsPanel != null)
         {
             instructionsPanel.SetActive(false);
+        }
+        if (mainMenuButtons != null)
+        {
+            mainMenuButtons.SetActive(true);
         }
     }
     
@@ -37,6 +42,11 @@ public class MainMenuUiManager : MonoBehaviour
         {
             bool isActive = instructionsPanel.activeSelf;
             instructionsPanel.SetActive(!isActive);
+
+            if (mainMenuButtons != null)
+            {
+                mainMenuButtons.SetActive(isActive); // If instructions are active, buttons should be inactive, and vice versa
+            }
         }
         else
         {
@@ -49,5 +59,4 @@ public class MainMenuUiManager : MonoBehaviour
         Debug.Log("Quitting Game...");
         Application.Quit();
     }
-    
 }
