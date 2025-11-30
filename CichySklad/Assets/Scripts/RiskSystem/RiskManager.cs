@@ -113,4 +113,11 @@ public class RiskManager : MonoBehaviour
             Debug.Log($"Risk Level Changed to: {_currentRiskLevel}");
         }
     }
+    public void ResetRisk(float value = 0f)
+    {
+        currentRisk = Mathf.Clamp(value, 0, maxRisk);
+        OnRiskChanged?.Invoke(currentRisk);
+        CheckRiskLevel();
+        Debug.Log($"Risk Reset to {currentRisk}");
+    }
 }

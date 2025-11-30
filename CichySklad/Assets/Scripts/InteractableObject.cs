@@ -89,7 +89,7 @@ public class InteractableObject : MonoBehaviour
         // Increase risk when interacting (simulating noise/activity)
         if (RiskManager.Instance != null)
         {
-            RiskManager.Instance.AddRisk(10f);
+            RiskManager.Instance.AddRisk(7.5f);
         }
     }
     

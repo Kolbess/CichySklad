@@ -76,6 +76,11 @@ public class ResourceManager : MonoBehaviour
     private int _trust;
     [SerializeField] private Slider trustSlider;
 
+    // Daily Stats
+    public int LeafletsHiddenToday { get; private set; }
+    public int LeafletsSentToday { get; private set; }
+
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -192,4 +197,20 @@ public class ResourceManager : MonoBehaviour
         }
     }
     
+    public void RecordHiddenLeaflet()
+    {
+        LeafletsHiddenToday++;
+    }
+
+    public void RecordSentLeaflet()
+    {
+        LeafletsSentToday++;
+    }
+
+    public void ResetDailyStats()
+    {
+        LeafletsHiddenToday = 0;
+        LeafletsSentToday = 0;
+        Debug.Log("Daily Stats Reset");
+    }
 }
