@@ -16,7 +16,13 @@ public class RiskManager : MonoBehaviour
     [SerializeField] private float criticalRiskThreshold = 90f;
 
     [Header("Decay")]
-    [SerializeField] private float riskDecayRate = 1f; // Risk reduced per second automatically (optional)
+    [SerializeField] private float riskDecayRate = 1f; // Risk reduced per second automatically
+    
+    [Header("Decay Multipliers")]
+    [SerializeField] private float lowRiskDecayMultiplier = 1.0f;
+    [SerializeField] private float mediumRiskDecayMultiplier = 0.75f;
+    [SerializeField] private float highRiskDecayMultiplier = 0.5f;
+    [SerializeField] private float criticalRiskDecayMultiplier = 0.25f;
 
     public event Action<float> OnRiskChanged;
     public event Action<RiskLevel> OnRiskLevelChanged;
@@ -40,8 +46,29 @@ public class RiskManager : MonoBehaviour
 
     private void Update()
     {
-        // Optional: Decay risk over time if needed
-        // ReduceRisk(riskDecayRate * Time.deltaTime);
+        // Decay risk over time with progressive multiplier
+        if (currentRisk > 0)
+        {
+            float multiplier = GetDecayMultiplier();
+            ReduceRisk(riskDecayRate * multiplier * Time.deltaTime);
+        }
+    }
+
+    private float GetDecayMultiplier()
+    {
+        switch (_currentRiskLevel)
+        {
+            case RiskLevel.Low:
+                return lowRiskDecayMultiplier;
+            case RiskLevel.Medium:
+                return mediumRiskDecayMultiplier;
+            case RiskLevel.High:
+                return highRiskDecayMultiplier;
+            case RiskLevel.Critical:
+                return criticalRiskDecayMultiplier;
+            default:
+                return 1.0f;
+        }
     }
 
     public void AddRisk(float amount)
