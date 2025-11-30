@@ -18,6 +18,7 @@ public class InspectionSystem : MonoBehaviour
     private int currentWaypoint = 0;
     private bool inspecting = false;
     public bool isCatching = false;
+    public float inspectionDelay = 0f;
     private float moveX;
     private float moveY;
 
@@ -68,6 +69,7 @@ public class InspectionSystem : MonoBehaviour
     
     private IEnumerator StartInspectionRoutine()
     {
+        yield return new WaitForSeconds(inspectionDelay);
         DisplayInspectionEnter();
 
         // 1. Czekaj aż ANIMATOR faktycznie wejdzie w stan

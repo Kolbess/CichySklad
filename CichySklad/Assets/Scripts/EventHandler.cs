@@ -57,6 +57,9 @@ public class EventHandler : MonoBehaviour
         EventSystem.OnBuyPaperOffer += HandleBuyPaperOffer;
 
         EventSystem.OnArrest += HandleArrest;
+
+        EventSystem.OnMediumTrust += HandleMediumTrust;
+        EventSystem.OnHighTrust += HandleHighTrust;
     }
 
     private void OnDisable()
@@ -111,6 +114,9 @@ public class EventHandler : MonoBehaviour
         EventSystem.OnBuyPaperOffer -= HandleBuyPaperOffer;
 
         EventSystem.OnArrest -= HandleArrest;
+        
+        EventSystem.OnMediumTrust -= HandleMediumTrust;
+        EventSystem.OnHighTrust -= HandleHighTrust;
     }
 
     // =======================
@@ -218,8 +224,9 @@ public class EventHandler : MonoBehaviour
 
     private void HandleRumorsSpread()
     {
-        dialogueSystem.ShowDialogue("Rumors are spreading. Passive risk increased.");
-        RiskManager.Instance.AddRisk(2);
+        dialogueSystem.ShowDialogue("Plotki się rozprzestrzeniają. Ryzyko wzrosło.");
+        RiskManager.Instance.AddRisk(5);
+        ResourceManager.Instance.money += 2; // ruble rosyjskie
     }
 
     // =======================
@@ -364,5 +371,17 @@ public class EventHandler : MonoBehaviour
     private void HandleArrest()
     {
         dialogueSystem.ShowDialogue("Zostałeś Aresztowany! Koniec Gry.");
+    }
+
+    private void HandleMediumTrust()
+    {
+        inspectionSystem.inspectionDelay = 2f;
+        dialogueSystem.ShowDialogue("Dzieciaki na czatach. Czas na ukrycie dowodów wydłużony!");   
+    }
+
+    private void HandleHighTrust()
+    {
+        ResourceManager.Instance.money += 50;
+        dialogueSystem.ShowDialogue("Otrzymano fundusze powstańcze 50 rubli. Ryzyko kontroli wzrasta!");
     }
 }

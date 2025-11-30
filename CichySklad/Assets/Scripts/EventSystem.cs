@@ -81,6 +81,8 @@ public class EventSystem : MonoBehaviour
     public static event Action OnOchranaBribe;
     public static event Action OnBuyPaperOffer;
     public static event Action OnArrest;
+    public static event Action OnMediumTrust;
+    public static event Action OnHighTrust;
 
     // =======================
     // 1. Kontrole
@@ -164,4 +166,7 @@ public class EventSystem : MonoBehaviour
     public static void BuyPaperOffer() => OnBuyPaperOffer?.Invoke();
 
     public static void Arrest() => OnArrest?.Invoke();
+
+    public static void MediumTrust() => OnMediumTrust?.Invoke();
+    public static void HighTrust() => OnHighTrust?.Invoke();
 }

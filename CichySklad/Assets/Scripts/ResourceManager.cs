@@ -109,13 +109,27 @@ public class ResourceManager : MonoBehaviour
     private int _money;
     [SerializeField] private TextMeshProUGUI moneyText;
 
+    // ---------------- TRUST ----------------
+
+    // Definicja progów zaufania jako stałe
+    private const int TrustThresholdLow = 25;
+    private const int TrustThresholdMedium = 50;
+    private const int TrustThresholdHigh = 75;
+    private const int TrustThresholdMax = 100;
+
     public int trust
     {
         get => _trust;
         set
         {
-            _trust = value;
-            UpdateTrust();
+            int clampedValue = Mathf.Clamp(value, 0, 100);
+            
+            if (_trust != clampedValue)
+            {
+                CheckTrustThresholds(_trust, clampedValue);
+                _trust = clampedValue;
+                UpdateTrust();
+            }
         }
     }
     private int _trust;
@@ -140,6 +154,40 @@ public class ResourceManager : MonoBehaviour
         _inkAnimator = noInkWarning.GetComponent<Animator>();
         _leafletsAnimator = noLeafletsWarning.GetComponent<Animator>();
         _moneyAnimator = noMoneyWarning.GetComponent<Animator>();
+    }
+
+    // Nowa metoda do sprawdzania progów
+    private void CheckTrustThresholds(int previousValue, int newValue)
+    {
+        // Sprawdzamy czy przekroczyliśmy próg "w górę" (poprzednia wartość była mniejsza, nowa jest równa lub większa)
+        
+        // Próg 25% - Początki poparcia
+        if (previousValue < TrustThresholdLow && newValue >= TrustThresholdLow)
+        {
+            Debug.Log($"<color=green>EVENT: Osiągnięto {TrustThresholdLow}% Zaufania! Ludzie zaczynają szeptać.</color>");
+            EventSystem.RumorsSpread();
+        }
+
+        // Próg 50% - Stabilne poparcie
+        if (previousValue < TrustThresholdMedium && newValue >= TrustThresholdMedium)
+        {
+            Debug.Log($"<color=yellow>EVENT: Osiągnięto {TrustThresholdMedium}% Zaufania! Jesteśmy lokalną siłą.</color>");
+            EventSystem.MediumTrust();
+        }
+
+        // Próg 75% - Wysokie zaufanie
+        if (previousValue < TrustThresholdHigh && newValue >= TrustThresholdHigh)
+        {
+            Debug.Log($"<color=orange>EVENT: Osiągnięto {TrustThresholdHigh}% Zaufania! Rewolucja wisi w powietrzu.</color>");
+            EventSystem.HighTrust();
+        }
+
+        // Próg 100% - Maksymalne oddanie
+        if (previousValue < TrustThresholdMax && newValue >= TrustThresholdMax)
+        {
+            Debug.Log($"<color=red>EVENT: Osiągnięto {TrustThresholdMax}% Zaufania! Miasto jest nasze.</color>");
+            //EventSystem.WinGame();
+        }
     }
 
     private void SpawnResource(GameObject prefab, int amount)
@@ -268,8 +316,12 @@ public class ResourceManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            EventSystem.RumorsSpread();
+             EventSystem.RumorsSpread(); 
+        }
+        
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            trust += 10; // Dodaje 10 zaufania po naciśnięciu T, żeby sprawdzić eventy
         }
     }
-    
 }
