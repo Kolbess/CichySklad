@@ -78,6 +78,13 @@ public class RiskManager : MonoBehaviour
         CheckRiskLevel();
     }
 
+    public void SetRisk(float amount)
+    {
+        currentRisk = Mathf.Clamp(amount, 0, maxRisk);
+        OnRiskChanged?.Invoke(currentRisk);
+        CheckRiskLevel();
+    }
+
     public void ReduceRisk(float amount)
     {
         currentRisk = Mathf.Clamp(currentRisk - amount, 0, maxRisk);

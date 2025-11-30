@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class ResourceManager : MonoBehaviour
 {
@@ -173,7 +176,7 @@ public class ResourceManager : MonoBehaviour
         }
     }
 
-    
+
     private void UpdatePaper()
     {
         paperText.text = $"{_paper}";
@@ -269,6 +272,11 @@ public class ResourceManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             EventSystem.RumorsSpread();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
     

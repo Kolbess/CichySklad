@@ -119,20 +119,31 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Open the door", () => EventSystem.KnockOpenChoice()),
-            new DialogueSystem.Choice("Hide items", () => EventSystem.KnockHideChoice())
+            new DialogueSystem.Choice("Otwórz", () =>
+            {
+                RiskManager.Instance.ReduceRisk(10);
+                inspectionSystem.StartInspection();
+            }),
+            new DialogueSystem.Choice("Nie otwieraj", () =>
+            {
+                RiskManager.Instance.AddRisk(10);
+                inspectionSystem.StartInspection();
+            })
         };
-        dialogueSystem.ShowDialogueWithChoices("Someone is knocking at the door! What do you do?", choices);
+        dialogueSystem.ShowDialogueWithChoices("Puk... Puk...", choices, dialogueSystem.GetPortraitSprite("ochrana"));
     }
 
     private void HandleNeighborPeeking()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Ignore", () => EventSystem.NeighborIgnored()),
-            new DialogueSystem.Choice("Dismiss politely", () => EventSystem.NeighborDismissed())
+            new DialogueSystem.Choice("Zignoruj", () =>
+            {
+                RiskManager.Instance.AddRisk(15);
+            }),
+            new DialogueSystem.Choice("Grzecznie wyproś", () => RiskManager.Instance.ReduceRisk(5))
         };
-        dialogueSystem.ShowDialogueWithChoices("Neighbor is peeking through the window.", choices);
+        dialogueSystem.ShowDialogueWithChoices("Mmm... A co on tam robi, może donosik?", choices, dialogueSystem.GetPortraitSprite("neighbour"));
     }
 
     private void HandleOchranaSteps()
@@ -200,7 +211,7 @@ public class EventHandler : MonoBehaviour
         var choices = new DialogueSystem.Choice[]
         {
             new DialogueSystem.Choice("Bribe neighbor", () => EventSystem.NeighborBribe()),
-            new DialogueSystem.Choice("Do nothing", () => { /* passive */ })
+            new DialogueSystem.Choice("Do nothing", () => { ResourceManager.Instance.trust -= 5; })
         };
         dialogueSystem.ShowDialogueWithChoices("Neighbor saw the courier!", choices);
     }
@@ -228,10 +239,18 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Help courier", () => EventSystem.CourierHelp()),
-            new DialogueSystem.Choice("Ignore", () => EventSystem.CourierIgnore())
+            new DialogueSystem.Choice("Pomóż", () =>
+            {
+                RiskManager.Instance.AddRisk(10);
+                ResourceManager.Instance.trust += 10;
+            }),
+            new DialogueSystem.Choice("Zignoruj", () =>
+            {
+                ResourceManager.Instance.trust -= 5;
+                RiskManager.Instance.ReduceRisk(5);
+            })
         };
-        dialogueSystem.ShowDialogueWithChoices("Courier is injured! What will you do?", choices);
+        dialogueSystem.ShowDialogueWithChoices("Pomóż mi jestem twoim kurierem", choices, dialogueSystem.GetPortraitSprite("kowal"));
     }
 
     private void HandleUrgentDelivery()

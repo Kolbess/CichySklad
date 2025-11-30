@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class InteractableObject : MonoBehaviour
@@ -65,7 +66,15 @@ public class InteractableObject : MonoBehaviour
     {
         _audioSource.Play();
     }
-    
+
+    private void OnDestroy()
+    {
+        if (hidingSpot)
+        {
+            hidingSpot._objects.Remove(this);
+        }
+    }
+
     private void TakeAnimation()
     {
         transform.localScale = new Vector3(1.1f, 1.1f, 1.1f);

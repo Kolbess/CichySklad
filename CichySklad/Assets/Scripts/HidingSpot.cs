@@ -21,7 +21,7 @@ public class HidingSpot : MonoBehaviour
     
     private AudioSource _audioSource;
     private Material _material;
-    private List<InteractableObject> _objects = new List<InteractableObject>();
+    public List<InteractableObject> _objects = new List<InteractableObject>();
 
     [SerializeField] private Sprite openSprite;
     [SerializeField] private Sprite closedSprite;
