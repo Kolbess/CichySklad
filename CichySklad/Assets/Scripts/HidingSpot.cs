@@ -23,10 +23,15 @@ public class HidingSpot : MonoBehaviour
     private Material _material;
     private List<InteractableObject> _objects = new List<InteractableObject>();
 
+    [SerializeField] private Sprite openSprite;
+    [SerializeField] private Sprite closedSprite;
+    private SpriteRenderer _spriteRenderer;
+
     private void Start()
     {
+        _spriteRenderer = GetComponent<SpriteRenderer>();
         _audioSource = GetComponent<AudioSource>();
-        _material = GetComponent<SpriteRenderer>().material;
+        _material = _spriteRenderer.material;
         Utils.DisableOutline(_material);
         _capacity = _objects.Count;
         contentUI.SetActive(false);
@@ -78,6 +83,7 @@ public class HidingSpot : MonoBehaviour
         contentUI.SetActive(true);
         GenerateContent();
         PlaySound();
+        ChangeSprite(true);
     }
 
     private void HideContent()
@@ -89,6 +95,7 @@ public class HidingSpot : MonoBehaviour
             var objectToSpawn = _objects[i];
             objectToSpawn.DisableObject();
         }
+        ChangeSprite(false);
     }
 
     private void GenerateContent()
@@ -147,6 +154,8 @@ public class HidingSpot : MonoBehaviour
     {
         if (!other.CompareTag("InteractableObject")) return;
         ShowCapacity();
+        Utils.EnableOutline(_material);
+        ChangeSprite(true);
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -162,6 +171,13 @@ public class HidingSpot : MonoBehaviour
     {
         if (!other.CompareTag("InteractableObject")) return;
         HideCapacity();
+        Utils.DisableOutline(_material);
+        ChangeSprite(false);
+    }
+
+    private void ChangeSprite(bool open)
+    {
+        _spriteRenderer.sprite = open ? openSprite : closedSprite;
     }
     
 }
