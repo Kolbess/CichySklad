@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,12 +16,26 @@ public class ResourceManager : MonoBehaviour
     private Animator _inkAnimator;
     private Animator _leafletsAnimator;
     private Animator _moneyAnimator;
+    [SerializeField] private GameObject paperPrefab;
+    [SerializeField] private GameObject inkPrefab;
+    [SerializeField] private GameObject leafletsPrefab;
+    [SerializeField] private GameObject moneyPrefab;
+    [SerializeField] private Transform resourceSpawnPoint;
+    private List<GameObject> _resources = new List<GameObject>(); 
     
+// ---------------- PAPER ----------------
     public int paper
     {
         get => _paper;
         set
         {
+            if (value < 0) value = 0;
+
+            if (value > _paper)
+                SpawnResource(paperPrefab, value - _paper);
+            else if (value < _paper)
+                DestroyResource(paperPrefab, _paper - value);
+
             _paper = value;
             UpdatePaper();
         }
@@ -28,11 +43,21 @@ public class ResourceManager : MonoBehaviour
     private int _paper;
     [SerializeField] private TextMeshProUGUI paperText;
 
+
+// ---------------- INK ----------------
+
     public int ink
     {
         get => _ink;
         set
         {
+            if (value < 0) value = 0;
+
+            if (value > _ink)
+                SpawnResource(inkPrefab, value - _ink);
+            else if (value < _ink)
+                DestroyResource(inkPrefab, _ink - value);
+
             _ink = value;
             UpdateInk();
         }
@@ -40,11 +65,21 @@ public class ResourceManager : MonoBehaviour
     private int _ink;
     [SerializeField] private TextMeshProUGUI inkText;
 
+
+// ---------------- LEAFLETS ----------------
+
     public int leaflets
     {
         get => _leaflets;
         set
         {
+            if (value < 0) value = 0;
+
+            if (value > _leaflets)
+                SpawnResource(leafletsPrefab, value - _leaflets);
+            else if (value < _leaflets)
+                DestroyResource(leafletsPrefab, _leaflets - value);
+
             _leaflets = value;
             UpdateLeaflets();
         }
@@ -52,11 +87,21 @@ public class ResourceManager : MonoBehaviour
     private int _leaflets;
     [SerializeField] private TextMeshProUGUI leafletsText;
 
+
+// ---------------- MONEY ----------------
+
     public int money
     {
         get => _money;
         set
         {
+            if (value < 0) value = 0;
+
+            if (value > _money)
+                SpawnResource(moneyPrefab, value - _money);
+            else if (value < _money)
+                DestroyResource(moneyPrefab, _money - value);
+
             _money = value;
             UpdateMoney();
         }
@@ -84,6 +129,9 @@ public class ResourceManager : MonoBehaviour
     
     private void Start()
     {
+        paper += 2;
+        money += 5;
+        ink += 2;
         UpdatePaper();
         UpdateInk();
         UpdateLeaflets();
@@ -93,6 +141,38 @@ public class ResourceManager : MonoBehaviour
         _leafletsAnimator = noLeafletsWarning.GetComponent<Animator>();
         _moneyAnimator = noMoneyWarning.GetComponent<Animator>();
     }
+
+    private void SpawnResource(GameObject prefab, int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            Vector3 offset = new Vector3(
+                Random.Range(-0.2f, 0.2f),
+                Random.Range(-0.2f, 0.2f),
+                0f
+            );
+            
+            _resources.Add(Instantiate(prefab, resourceSpawnPoint.position + offset, Quaternion.identity));
+        }
+    }
+
+    private void DestroyResource(GameObject prefab, int amount)
+    {
+        for (int i = _resources.Count - 1; i >= 0 && amount > 0; i--)
+        {
+            GameObject res = _resources[i];
+            if (res)
+            {
+                if (res.name.Contains(prefab.name))
+                {
+                    Destroy(res);
+                    _resources.RemoveAt(i);
+                    amount--;
+                }
+            }
+        }
+    }
+
     
     private void UpdatePaper()
     {

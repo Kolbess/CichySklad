@@ -22,4 +22,11 @@ public class Utils : MonoBehaviour
         material.SetInt(OutlineEnabled, 0);
         // Debug.Log("EnableOutline" + material.name + " disabled");
     }
+    
+    public static bool IsAnimationFinished(Animator animator, string animation)
+    {
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        Debug.Log($"{state.IsName(animation)}, Hello: {state.normalizedTime >= 1f}");
+        return state.IsName(animation) && state.normalizedTime >= 1f;
+    }
 }

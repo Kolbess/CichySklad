@@ -3,6 +3,7 @@ using UnityEngine;
 public class EventHandler : MonoBehaviour
 {
     [SerializeField] private DialogueSystem dialogueSystem;
+    [SerializeField] private InspectionSystem inspectionSystem;
 
     private void OnEnable()
     {
@@ -54,6 +55,8 @@ public class EventHandler : MonoBehaviour
         // 8. Ekonomiczne
         EventSystem.OnOchranaBribe += HandleOchranaBribe;
         EventSystem.OnBuyPaperOffer += HandleBuyPaperOffer;
+
+        EventSystem.OnArrest += HandleArrest;
     }
 
     private void OnDisable()
@@ -106,6 +109,8 @@ public class EventHandler : MonoBehaviour
         // 8. Ekonomiczne
         EventSystem.OnOchranaBribe -= HandleOchranaBribe;
         EventSystem.OnBuyPaperOffer -= HandleBuyPaperOffer;
+
+        EventSystem.OnArrest -= HandleArrest;
     }
 
     // =======================
@@ -299,7 +304,7 @@ public class EventHandler : MonoBehaviour
 
     private void HandleFireCandle()
     {
-        ResourceManager.Instance.paper = Mathf.Max(0, ResourceManager.Instance.paper - 5);
+        ResourceManager.Instance.TrySpend(costPaper: Mathf.Abs(ResourceManager.Instance.paper / 5));
         dialogueSystem.ShowDialogue("Candle caught fire! Lost some paper.");
     }
 
@@ -313,13 +318,38 @@ public class EventHandler : MonoBehaviour
     // 8. Ekonomiczne
     private void HandleOchranaBribe()
     {
+        const int bribe = 5; // w rublach
+
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Pay bribe", () => EventSystem.OchranaBribe()),
-            new DialogueSystem.Choice("Refuse", () => { RiskManager.Instance.AddRisk(5); })
+            new DialogueSystem.Choice($"Zapłać łapówkę:\n {bribe} rubli", () =>
+            {
+                if (ResourceManager.Instance.TrySpend(costMoney: bribe))
+                {
+                    RiskManager.Instance.ReduceRisk(RiskManager.Instance.CurrentRisk / 2);
+                    inspectionSystem.isCatching = false; // koniec eventu
+                }
+                else
+                {
+                    Debug.Log("Trigger Arrest!");
+                    EventSystem.Arrest();
+                }
+            }),
+
+            new DialogueSystem.Choice("Odmów", () =>
+            {
+                RiskManager.Instance.AddRisk(5);
+                inspectionSystem.isCatching = false; // koniec eventu
+            })
         };
-        dialogueSystem.ShowDialogueWithChoices("Ochrana expects a small bribe. What do you do?", choices);
+
+        dialogueSystem.ShowDialogueWithChoices(
+            "Płać rublem albo płacz",
+            choices,
+            dialogueSystem.GetPortraitSprite("ochrana")
+        );
     }
+
 
     private void HandleBuyPaperOffer()
     {
@@ -329,5 +359,10 @@ public class EventHandler : MonoBehaviour
             new DialogueSystem.Choice("Ignore offer", () => { /* nothing */ })
         };
         dialogueSystem.ShowDialogueWithChoices("Opportunity to buy cheaper paper. Choose wisely.", choices);
+    }
+
+    private void HandleArrest()
+    {
+        dialogueSystem.ShowDialogue("Zostałeś Aresztowany! Koniec Gry.");
     }
 }

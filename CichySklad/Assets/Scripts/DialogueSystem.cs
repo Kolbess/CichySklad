@@ -11,6 +11,10 @@ public class DialogueSystem : MonoBehaviour
     [SerializeField] private Sprite defaultPortrait;
     [SerializeField] private GameObject choiceButtonPrefab; // prefab with Button + Text
     [SerializeField] private Transform choicesContainer;   // parent for buttons
+    [SerializeField] private Sprite ochranaSprite;
+    [SerializeField] private Sprite mariaSprite;
+    [SerializeField] private Sprite kowalSprite;
+    [SerializeField] private Sprite neighbourSprite;
 
     private Action _onChoiceMade;
 
@@ -32,6 +36,23 @@ public class DialogueSystem : MonoBehaviour
         ClearChoices();
         CancelInvoke(nameof(HideDialogue));
         Invoke(nameof(HideDialogue), 4f); // auto-hide if no choice
+    }
+
+    public Sprite GetPortraitSprite(string characterName)
+    {
+        switch (characterName)
+        {
+            case "ochrana":
+                return ochranaSprite;
+            case "maria":
+                return mariaSprite;
+            case "kowal":
+                return kowalSprite;
+            case "neighbour":
+                return neighbourSprite;
+            default:
+                return defaultPortrait;
+        }
     }
 
     // Show dialogue with choices

@@ -6,6 +6,8 @@ TagManager:
   tags:
   - InteractableObject
   - ContentSlot
+  - NPC
+  - Sensitive
   layers:
   - Default
   - TransparentFX

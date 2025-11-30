@@ -80,6 +80,7 @@ public class EventSystem : MonoBehaviour
     // 8. Ekonomiczne / łapówki
     public static event Action OnOchranaBribe;
     public static event Action OnBuyPaperOffer;
+    public static event Action OnArrest;
 
     // =======================
     // 1. Kontrole
@@ -161,4 +162,6 @@ public class EventSystem : MonoBehaviour
     // 8. Ekonomiczne / łapówki
     public static void OchranaBribe() => OnOchranaBribe?.Invoke();
     public static void BuyPaperOffer() => OnBuyPaperOffer?.Invoke();
+
+    public static void Arrest() => OnArrest?.Invoke();
 }
