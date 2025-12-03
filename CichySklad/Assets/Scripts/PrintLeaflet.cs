@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -6,7 +7,7 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 {
     [Header("UI Elements")]
     public Slider cooldownSlider;
-    public Text costText;
+    public TextMeshProUGUI costText;
 
     [Header("Settings")]
     public float cooldownDuration = 5f;

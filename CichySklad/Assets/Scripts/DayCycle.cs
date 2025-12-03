@@ -16,7 +16,7 @@ public class DayCycle : MonoBehaviour
     private float lastDayRisk;
     [SerializeField] private GameObject dayScreen;
     [SerializeField] private TextMeshProUGUI dayText;
-    private int currentDay = 1;
+    private int currentDay = 0;
     private bool dayDisplay = false;
     private bool eventA = false;
     private bool eventB = false;
@@ -68,13 +68,14 @@ public class DayCycle : MonoBehaviour
 
         if (timer >= dayTime)
         {
+            timer = 0f;
             EndDay();
         }
     }
 
     private void EndDay()
     {
-        if (currentDay == 7)
+        if (currentDay == 7 && ResourceManager.Instance.trust == 100)
         {
             SceneManager.LoadScene("EndGame");
         }
@@ -127,6 +128,7 @@ public class DayCycle : MonoBehaviour
 
     private void StartDay()
     {
+        currentDay += 1;
         timer = 0f;
         DisplayDayScreen();
         var randomMultiplier = Random.Range(0, 10);
@@ -144,7 +146,7 @@ public class DayCycle : MonoBehaviour
     private void DisplayDayScreen()
     {
         dayScreen.SetActive(true);
-        dayText.text = $"Dzień {currentDay}";
+        dayText.text = $"{3 + currentDay} Listopad 1945";
         dayDisplay = true;
     }
 
