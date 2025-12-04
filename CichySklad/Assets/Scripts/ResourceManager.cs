@@ -25,6 +25,9 @@ public class ResourceManager : MonoBehaviour
     [SerializeField] private GameObject moneyPrefab;
     [SerializeField] private Transform resourceSpawnPoint;
     private List<GameObject> _resources = new List<GameObject>(); 
+    [SerializeField] private GameObject packagePrefab;
+    [SerializeField] private int itemsPerPackage = 3;
+
     
 // ---------------- PAPER ----------------
     public int paper
@@ -145,36 +148,74 @@ public class ResourceManager : MonoBehaviour
         _moneyAnimator = noMoneyWarning.GetComponent<Animator>();
     }
 
-    private void SpawnResource(GameObject prefab, int amount)
+private void SpawnResource(GameObject prefab, int amount)
+{
+    int spawned = 0;
+
+    while (spawned < amount)
     {
-        for (int i = 0; i < amount; i++)
+        // Tworzymy paczkę
+        var packageGO = Instantiate(packagePrefab, resourceSpawnPoint.position, Quaternion.identity);
+        var package = packageGO.GetComponent<Package>();
+
+        // Ile itemów wrzucić do tej paczki?
+        int remaining = amount - spawned;
+        int count = Mathf.Min(itemsPerPackage, remaining);
+
+        for (int i = 0; i < count; i++)
         {
             Vector3 offset = new Vector3(
-                Random.Range(-0.2f, 0.2f),
-                Random.Range(-0.2f, 0.2f),
+                Random.Range(-0.15f, 0.15f),
+                Random.Range(-0.15f, 0.15f),
                 0f
             );
             
-            _resources.Add(Instantiate(prefab, resourceSpawnPoint.position + offset, Quaternion.identity));
+            GameObject item = Instantiate(prefab, packageGO.transform.position + offset, Quaternion.identity);
+            package.AddItem(item);
+        }
+
+        spawned += count;
+    }
+}
+
+
+private void DestroyResource(GameObject prefab, int amount)
+{
+    int toRemove = amount;
+
+    // Usuń z pojedynczych obiektów
+    for (int i = _resources.Count - 1; i >= 0 && toRemove > 0; i--)
+    {
+        var res = _resources[i];
+        if (!res) continue;
+
+        if (res.name.Contains(prefab.name))
+        {
+            Destroy(res);
+            _resources.RemoveAt(i);
+            toRemove--;
         }
     }
 
-    private void DestroyResource(GameObject prefab, int amount)
+    if (toRemove <= 0) return;
+
+    // Usuń z paczek
+    foreach (Package p in FindObjectsOfType<Package>())
     {
-        for (int i = _resources.Count - 1; i >= 0 && amount > 0; i--)
+        var items = p.GetItems();
+        for (int i = items.Count - 1; i >= 0 && toRemove > 0; i--)
         {
-            GameObject res = _resources[i];
-            if (res)
+            if (items[i].name.Contains(prefab.name))
             {
-                if (res.name.Contains(prefab.name))
-                {
-                    Destroy(res);
-                    _resources.RemoveAt(i);
-                    amount--;
-                }
+                Destroy(items[i]);
+                items.RemoveAt(i);
+                toRemove--;
             }
         }
+        if (toRemove <= 0) break;
     }
+}
+
 
 
     private void UpdatePaper()
