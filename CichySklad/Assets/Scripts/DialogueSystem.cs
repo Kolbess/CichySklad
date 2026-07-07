@@ -1,41 +1,133 @@
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
-using System;
 
+/// <summary>
+/// Presents narrative text with an optional portrait, and optionally a row of choice buttons.
+/// Choiceless dialogue auto-hides after a delay; choices hide it on selection. Portrait lookup is
+/// keyed by a short character name.
+/// </summary>
 public class DialogueSystem : MonoBehaviour
 {
-    [SerializeField] private GameObject dialogueBox;
-    [SerializeField] private TextMeshProUGUI dialogueText;
-    [SerializeField] private Image dialogueImage;
-    [SerializeField] private Sprite defaultPortrait;
-    [SerializeField] private GameObject choiceButtonPrefab; // prefab with Button + Text
-    [SerializeField] private Transform choicesContainer;   // parent for buttons
-    [SerializeField] private Sprite ochranaSprite;
-    [SerializeField] private Sprite mariaSprite;
-    [SerializeField] private Sprite kowalSprite;
-    [SerializeField] private Sprite neighbourSprite;
+    [Header("Dialogue Box")]
+    [Tooltip("Root object toggled to show/hide the dialogue. Required.")]
+    [FormerlySerializedAs("dialogueBox")]
+    [SerializeField]
+    private GameObject _dialogueBox;
 
-    private Action _onChoiceMade;
+    [Tooltip("Text element that displays the dialogue body. Required.")]
+    [FormerlySerializedAs("dialogueText")]
+    [SerializeField]
+    private TextMeshProUGUI _dialogueText;
+
+    [Tooltip("Image element that displays the speaker portrait. Required.")]
+    [FormerlySerializedAs("dialogueImage")]
+    [SerializeField]
+    private Image _dialogueImage;
+
+    [Header("Choices")]
+    [Tooltip("Prefab with a Button + child text used for each choice. Required.")]
+    [FormerlySerializedAs("choiceButtonPrefab")]
+    [SerializeField]
+    private GameObject _choiceButtonPrefab;
+
+    [Tooltip("Parent transform the choice buttons are spawned under. Required.")]
+    [FormerlySerializedAs("choicesContainer")]
+    [SerializeField]
+    private Transform _choicesContainer;
+
+    [Header("Timing")]
+    [Tooltip("Seconds a choiceless dialogue stays on screen before auto-hiding.")]
+    [SerializeField]
+    private float _autoHideSeconds = 4f;
+
+    [Header("Portraits")]
+    [Tooltip("Portrait used when a character name is unknown or none is supplied.")]
+    [FormerlySerializedAs("defaultPortrait")]
+    [SerializeField]
+    private Sprite _defaultPortrait;
+
+    [Tooltip("Portrait for the 'ochrana' speaker.")]
+    [FormerlySerializedAs("ochranaSprite")]
+    [SerializeField]
+    private Sprite _ochranaSprite;
+
+    [Tooltip("Portrait for the 'maria' speaker.")]
+    [FormerlySerializedAs("mariaSprite")]
+    [SerializeField]
+    private Sprite _mariaSprite;
+
+    [Tooltip("Portrait for the 'kowal' speaker.")]
+    [FormerlySerializedAs("kowalSprite")]
+    [SerializeField]
+    private Sprite _kowalSprite;
+
+    [Tooltip("Portrait for the 'neighbour' speaker.")]
+    [FormerlySerializedAs("neighbourSprite")]
+    [SerializeField]
+    private Sprite _neighbourSprite;
+
+    private void Awake()
+    {
+        Assert.IsNotNull(
+            _dialogueBox,
+            $"[{nameof(DialogueSystem)}] Dialogue box unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _dialogueText,
+            $"[{nameof(DialogueSystem)}] Dialogue text unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _dialogueImage,
+            $"[{nameof(DialogueSystem)}] Dialogue image unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _choiceButtonPrefab,
+            $"[{nameof(DialogueSystem)}] Choice button prefab unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _choicesContainer,
+            $"[{nameof(DialogueSystem)}] Choices container unassigned on {name}!"
+        );
+    }
 
     private void Start()
     {
-        dialogueBox.SetActive(false);
+        _dialogueBox.SetActive(false);
     }
 
-    // Show a simple dialogue with optional portrait
+    /// <summary>Shows a plain dialogue line that auto-hides after <see cref="_autoHideSeconds"/>.</summary>
     public void ShowDialogue(string text, Sprite portrait = null)
     {
-        dialogueBox.SetActive(true);
-        dialogueText.text = text;
-
-        dialogueImage.sprite = portrait ? portrait : defaultPortrait;
-
-        dialogueImage.gameObject.SetActive(true);
-
+        OpenWith(text, portrait);
         ClearChoices();
         CancelInvoke(nameof(HideDialogue));
-        Invoke(nameof(HideDialogue), 4f); // auto-hide if no choice
+        Invoke(nameof(HideDialogue), _autoHideSeconds);
+    }
+
+    /// <summary>Shows a dialogue with a row of choice buttons; hides when a choice is picked.</summary>
+    public void ShowDialogueWithChoices(string text, Choice[] choices, Sprite portrait = null)
+    {
+        OpenWith(text, portrait);
+        ClearChoices();
+
+        foreach (Choice choice in choices)
+        {
+            GameObject buttonObject = Instantiate(_choiceButtonPrefab, _choicesContainer);
+            Button button = buttonObject.GetComponent<Button>();
+            TextMeshProUGUI buttonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>();
+            buttonText.text = choice.Text;
+
+            Action onSelected = choice.OnSelected;
+            button.onClick.AddListener(() =>
+            {
+                onSelected?.Invoke();
+                HideDialogue();
+            });
+        }
     }
 
     public Sprite GetPortraitSprite(string characterName)
@@ -43,65 +135,48 @@ public class DialogueSystem : MonoBehaviour
         switch (characterName)
         {
             case "ochrana":
-                return ochranaSprite;
+                return _ochranaSprite;
             case "maria":
-                return mariaSprite;
+                return _mariaSprite;
             case "kowal":
-                return kowalSprite;
+                return _kowalSprite;
             case "neighbour":
-                return neighbourSprite;
+                return _neighbourSprite;
             default:
-                return defaultPortrait;
+                return _defaultPortrait;
         }
     }
 
-    // Show dialogue with choices
-    public void ShowDialogueWithChoices(string text, Choice[] choices, Sprite portrait = null)
+    private void OpenWith(string text, Sprite portrait)
     {
-        dialogueBox.SetActive(true);
-        dialogueText.text = text;
-
-        dialogueImage.sprite = portrait ? portrait : defaultPortrait;
-        dialogueImage.gameObject.SetActive(true);
-
-        ClearChoices();
-
-        foreach (var choice in choices)
-        {
-            GameObject btnObj = Instantiate(choiceButtonPrefab, choicesContainer);
-            Button btn = btnObj.GetComponent<Button>();
-            TextMeshProUGUI btnText = btnObj.GetComponentInChildren<TextMeshProUGUI>();
-            btnText.text = choice.text;
-            btn.onClick.AddListener(() =>
-            {
-                choice.onSelected.Invoke();
-                HideDialogue();
-            });
-        }
+        _dialogueBox.SetActive(true);
+        _dialogueText.text = text;
+        _dialogueImage.sprite = portrait ? portrait : _defaultPortrait;
+        _dialogueImage.gameObject.SetActive(true);
     }
 
     private void ClearChoices()
     {
-        foreach (Transform child in choicesContainer)
+        foreach (Transform child in _choicesContainer)
             Destroy(child.gameObject);
     }
 
     private void HideDialogue()
     {
-        dialogueBox.SetActive(false);
+        _dialogueBox.SetActive(false);
         ClearChoices();
     }
 
-    [Serializable]
-    public struct Choice
+    /// <summary>A single dialogue choice: its button label and the action taken when selected.</summary>
+    public readonly struct Choice
     {
-        public string text;
-        public Action onSelected;
+        public string Text { get; }
+        public Action OnSelected { get; }
 
         public Choice(string text, Action onSelected)
         {
-            this.text = text;
-            this.onSelected = onSelected;
+            Text = text;
+            OnSelected = onSelected;
         }
     }
 }

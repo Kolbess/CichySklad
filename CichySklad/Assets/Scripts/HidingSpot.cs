@@ -1,58 +1,106 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
-using UnityEngine.UI;
+using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 
+/// <summary>
+/// A container the player drags contraband into. Shows remaining capacity on hover, opens a
+/// content panel on click, and lays hidden objects out onto content slots. Owns the list of
+/// stashed <see cref="InteractableObject"/>s; objects notify it when destroyed.
+/// </summary>
+[RequireComponent(typeof(SpriteRenderer), typeof(AudioSource))]
 public class HidingSpot : MonoBehaviour
 {
+    [Header("Capacity")]
+    [Tooltip("Maximum number of objects this spot can hold. Must be >= 1.")]
+    [FormerlySerializedAs("maxCapacity")]
+    [SerializeField]
+    private int _maxCapacity = 3;
+
+    [Tooltip("Root object of the 'space left' readout, shown on hover. Required.")]
+    [FormerlySerializedAs("capacityUI")]
+    [SerializeField]
+    private GameObject _capacityUI;
+
+    [Tooltip("Text that displays the remaining capacity. Required.")]
+    [FormerlySerializedAs("capacityText")]
+    [SerializeField]
+    private TextMeshProUGUI _capacityText;
+
+    [Header("Content Panel")]
+    [Tooltip("Panel (with tagged 'ContentSlot' children) that lays out stashed objects. Required.")]
+    [FormerlySerializedAs("contentUI")]
+    [SerializeField]
+    private GameObject _contentUI;
+
+    [Header("Sprites")]
+    [Tooltip("Sprite shown while the spot is open.")]
+    [FormerlySerializedAs("openSprite")]
+    [SerializeField]
+    private Sprite _openSprite;
+
+    [Tooltip("Sprite shown while the spot is closed.")]
+    [FormerlySerializedAs("closedSprite")]
+    [SerializeField]
+    private Sprite _closedSprite;
+
+    private readonly List<InteractableObject> _objects = new List<InteractableObject>();
     private int _capacity;
-    [SerializeField] private int maxCapacity;
-    [SerializeField] private GameObject capacityUI;
-    [SerializeField] private TextMeshProUGUI capacityText;
-    
-    [SerializeField] private float risk;
-    [SerializeField] private Image riskImage;
-    private int _timesUsed;
-
-    [SerializeField] private GameObject contentUI;
-    
     private AudioSource _audioSource;
-    private Material _material;
-    public List<InteractableObject> _objects = new List<InteractableObject>();
-
-    [SerializeField] private Sprite openSprite;
-    [SerializeField] private Sprite closedSprite;
     private SpriteRenderer _spriteRenderer;
+    private Material _material;
 
-    private void Start()
+    public IReadOnlyList<InteractableObject> Objects => _objects;
+
+    private void OnValidate()
+    {
+        if (_maxCapacity < 1)
+            _maxCapacity = 1;
+    }
+
+    private void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _audioSource = GetComponent<AudioSource>();
         _material = _spriteRenderer.material;
-        Utils.DisableOutline(_material);
-        _capacity = _objects.Count;
-        contentUI.SetActive(false);
-        capacityUI.SetActive(false);
+
+        Assert.IsNotNull(_capacityUI, $"[{nameof(HidingSpot)}] Capacity UI unassigned on {name}!");
+        Assert.IsNotNull(
+            _capacityText,
+            $"[{nameof(HidingSpot)}] Capacity text unassigned on {name}!"
+        );
+        Assert.IsNotNull(_contentUI, $"[{nameof(HidingSpot)}] Content UI unassigned on {name}!");
     }
 
-    private void ShowCapacity()
+    private void Start()
     {
-        UpdateCapacity();
-        capacityUI.SetActive(true);
-    }
-    
-    private void UpdateCapacity()
-    {
+        Utils.DisableOutline(_material);
         _capacity = _objects.Count;
-        capacityText.text = $"Space Left: {maxCapacity - _capacity}";
+        _contentUI.SetActive(false);
+        _capacityUI.SetActive(false);
     }
-    
-    private void HideCapacity()
+
+    /// <summary>Removes an object as the player pulls it back out, re-laying-out the remainder.</summary>
+    public void TakeOutObject(InteractableObject interactableObject)
     {
-        capacityUI.SetActive(false);
+        _objects.Remove(interactableObject);
+        interactableObject.IsHidden = false;
+        interactableObject.ClearHidingSpot();
+        UpdateCapacity();
+
+        if (_capacity <= 0)
+            HideContent();
+        else
+            GenerateContent();
+    }
+
+    /// <summary>Called by an object when it is destroyed so the spot drops its stale reference.</summary>
+    public void RemoveObject(InteractableObject interactableObject)
+    {
+        if (_objects.Remove(interactableObject))
+            UpdateCapacity();
     }
 
     private void OnMouseEnter()
@@ -60,99 +108,26 @@ public class HidingSpot : MonoBehaviour
         Utils.EnableOutline(_material);
         ShowCapacity();
     }
-    
+
     private void OnMouseExit()
     {
         Utils.DisableOutline(_material);
         HideCapacity();
     }
-    
+
     private void OnMouseDown()
     {
-        ChangeContentState();
-    }
-
-    private void ChangeContentState()
-    {
-        if (contentUI.activeSelf) HideContent();
-        else ShowContent();
-    }
-    
-    private void ShowContent()
-    {
-        contentUI.SetActive(true);
-        GenerateContent();
-        PlaySound();
-        ChangeSprite(true);
-    }
-
-    private void HideContent()
-    {
-        contentUI.SetActive(false);
-        PlaySound();
-        for (int i = 0; i < _capacity; i++)
-        {
-            var objectToSpawn = _objects[i];
-            objectToSpawn.DisableObject();
-        }
-        ChangeSprite(false);
-    }
-
-    private void GenerateContent()
-    {
-        var allChildObjects = contentUI.GetComponentsInChildren<Transform>(true).Select(t => t.gameObject).ToArray();
-        var contentSlots = allChildObjects.Where(obj => obj.CompareTag("ContentSlot")).ToArray();
-
-        for (int i = 0; i < _capacity; i++)
-        {
-            var objectToSpawn = _objects[i];
-            objectToSpawn.EnableObject();
-            objectToSpawn.transform.position = contentSlots[i].transform.position;
-            objectToSpawn.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
-        }
-        Debug.Log("GeneratedContent");
-    }
-
-
-    private void PlaySound(AudioClip clip=null)
-    {
-        if (clip) _audioSource.PlayOneShot(clip);
-        _audioSource.Play();
-    }
-
-    private void HideObject(GameObject obj)
-    {
-        var objInteractableScript = obj.GetComponent<InteractableObject>();
-        if (_objects.Count >= maxCapacity || _objects.Contains(objInteractableScript)) return;
-        _objects.Add(objInteractableScript);
-        objInteractableScript.isHidden = true;
-        objInteractableScript.hidingSpot = this;
-        UpdateCapacity();
-        if (contentUI.activeSelf) GenerateContent();
-        PlaySound();
-        Debug.Log($"{string.Join(", ", _objects.Select(o => o.name))}, HideObject");
-    }
-
-    public void TakeOutObject(InteractableObject interactableObject)
-    {
-        _objects.Remove(interactableObject);
-        interactableObject.isHidden = false;
-        interactableObject.hidingSpot = null;
-        UpdateCapacity();
-        if (_capacity <= 0)
-        {
+        if (_contentUI.activeSelf)
             HideContent();
-        }
         else
-        {
-            GenerateContent();
-        }
-        Debug.Log($"{string.Join(", ", _objects.Select(o => o.name))}, TakeOutObject");
+            ShowContent();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag("InteractableObject")) return;
+        if (!other.CompareTag("InteractableObject"))
+            return;
+
         ShowCapacity();
         Utils.EnableOutline(_material);
         ChangeSprite(true);
@@ -160,24 +135,96 @@ public class HidingSpot : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (!other.CompareTag("InteractableObject")) return;
+        if (!other.CompareTag("InteractableObject"))
+            return;
+
         if (!Input.GetMouseButton(0))
-        {
             HideObject(other.gameObject);
-        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (!other.CompareTag("InteractableObject")) return;
+        if (!other.CompareTag("InteractableObject"))
+            return;
+
         HideCapacity();
         Utils.DisableOutline(_material);
         ChangeSprite(false);
     }
 
-    private void ChangeSprite(bool open)
+    private void ShowCapacity()
     {
-        _spriteRenderer.sprite = open ? openSprite : closedSprite;
+        UpdateCapacity();
+        _capacityUI.SetActive(true);
     }
-    
+
+    private void HideCapacity() => _capacityUI.SetActive(false);
+
+    private void UpdateCapacity()
+    {
+        _capacity = _objects.Count;
+        _capacityText.text = $"Space Left: {_maxCapacity - _capacity}";
+    }
+
+    private void ShowContent()
+    {
+        _contentUI.SetActive(true);
+        GenerateContent();
+        PlaySound();
+        ChangeSprite(true);
+    }
+
+    private void HideContent()
+    {
+        _contentUI.SetActive(false);
+        PlaySound();
+        foreach (InteractableObject stashed in _objects)
+            stashed.DisableObject();
+        ChangeSprite(false);
+    }
+
+    private void GenerateContent()
+    {
+        GameObject[] contentSlots = _contentUI
+            .GetComponentsInChildren<Transform>(true)
+            .Select(t => t.gameObject)
+            .Where(obj => obj.CompareTag("ContentSlot"))
+            .ToArray();
+
+        for (int i = 0; i < _capacity && i < contentSlots.Length; i++)
+        {
+            InteractableObject objectToSpawn = _objects[i];
+            objectToSpawn.EnableObject();
+            objectToSpawn.transform.position = contentSlots[i].transform.position;
+            objectToSpawn.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+        }
+    }
+
+    private void HideObject(GameObject obj)
+    {
+        if (!obj.TryGetComponent(out InteractableObject interactable))
+            return;
+
+        if (_objects.Count >= _maxCapacity || _objects.Contains(interactable))
+            return;
+
+        _objects.Add(interactable);
+        interactable.IsHidden = true;
+        interactable.AssignHidingSpot(this);
+        UpdateCapacity();
+
+        if (_contentUI.activeSelf)
+            GenerateContent();
+        PlaySound();
+    }
+
+    private void ChangeSprite(bool open) =>
+        _spriteRenderer.sprite = open ? _openSprite : _closedSprite;
+
+    private void PlaySound(AudioClip clip = null)
+    {
+        if (clip)
+            _audioSource.PlayOneShot(clip);
+        _audioSource.Play();
+    }
 }

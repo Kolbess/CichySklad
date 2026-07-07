@@ -1,324 +1,365 @@
-using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Random = UnityEngine.Random;
 
+/// <summary>
+/// Runtime view/adapter for the pure <see cref="ResourceLedger"/>. The ledger owns the accounting
+/// (clamping, spend rules — unit-tested in EditMode); this component reacts to its events to spawn
+/// or destroy resource prefabs, update counter text, and flash "out of resource" warnings.
+///
+/// De-singletoned: consumers hold a <c>[SerializeField]</c> reference instead of a static Instance.
+/// </summary>
 public class ResourceManager : MonoBehaviour
 {
-    public static ResourceManager Instance;
-    
+    [Header("Counter Text")]
+    [Tooltip("Text showing the current paper count. Required.")]
+    [FormerlySerializedAs("paperText")]
+    [SerializeField]
+    private TextMeshProUGUI _paperText;
+
+    [Tooltip("Text showing the current ink count. Required.")]
+    [FormerlySerializedAs("inkText")]
+    [SerializeField]
+    private TextMeshProUGUI _inkText;
+
+    [Tooltip("Text showing the current leaflet count. Required.")]
+    [FormerlySerializedAs("leafletsText")]
+    [SerializeField]
+    private TextMeshProUGUI _leafletsText;
+
+    [Tooltip("Text showing the current money count. Required.")]
+    [FormerlySerializedAs("moneyText")]
+    [SerializeField]
+    private TextMeshProUGUI _moneyText;
+
+    [Tooltip("Slider showing trust as a 0..1 fraction of 100. Required.")]
+    [FormerlySerializedAs("trustSlider")]
+    [SerializeField]
+    private Slider _trustSlider;
+
+    [Header("Shortage Warnings (each needs an Animator)")]
+    [Tooltip("Object flashed when paper is too low to spend. Required.")]
+    [FormerlySerializedAs("noPaperWarning")]
+    [SerializeField]
+    private GameObject _noPaperWarning;
+
+    [Tooltip("Object flashed when ink is too low to spend. Required.")]
+    [FormerlySerializedAs("noInkWarning")]
+    [SerializeField]
+    private GameObject _noInkWarning;
+
+    [Tooltip("Object flashed when leaflets are too low to spend. Required.")]
+    [FormerlySerializedAs("noLeafletsWarning")]
+    [SerializeField]
+    private GameObject _noLeafletsWarning;
+
+    [Tooltip("Object flashed when money is too low to spend. Required.")]
+    [FormerlySerializedAs("noMoneyWarning")]
+    [SerializeField]
+    private GameObject _noMoneyWarning;
+
+    [Header("Spawning")]
+    [Tooltip("Prefab spawned/destroyed to visualise a unit of paper. Required.")]
+    [FormerlySerializedAs("paperPrefab")]
+    [SerializeField]
+    private GameObject _paperPrefab;
+
+    [Tooltip("Prefab spawned/destroyed to visualise a unit of ink. Required.")]
+    [FormerlySerializedAs("inkPrefab")]
+    [SerializeField]
+    private GameObject _inkPrefab;
+
+    [Tooltip("Prefab spawned/destroyed to visualise a unit of leaflets. Required.")]
+    [FormerlySerializedAs("leafletsPrefab")]
+    [SerializeField]
+    private GameObject _leafletsPrefab;
+
+    [Tooltip("Prefab spawned/destroyed to visualise a unit of money. Required.")]
+    [FormerlySerializedAs("moneyPrefab")]
+    [SerializeField]
+    private GameObject _moneyPrefab;
+
+    [Tooltip("Package prefab that spawned resource items are bundled into. Required.")]
+    [FormerlySerializedAs("packagePrefab")]
+    [SerializeField]
+    private GameObject _packagePrefab;
+
+    [Tooltip("World point where new resource packages appear. Required.")]
+    [FormerlySerializedAs("resourceSpawnPoint")]
+    [SerializeField]
+    private Transform _resourceSpawnPoint;
+
+    [Tooltip("Maximum resource items bundled into a single package. Must be >= 1.")]
+    [FormerlySerializedAs("itemsPerPackage")]
+    [SerializeField]
+    private int _itemsPerPackage = 3;
+
+    [Header("Starting Resources")]
+    [Tooltip("Paper granted at the start of a run.")]
+    [SerializeField]
+    private int _startingPaper = 2;
+
+    [Tooltip("Ink granted at the start of a run.")]
+    [SerializeField]
+    private int _startingInk = 2;
+
+    [Tooltip("Money granted at the start of a run.")]
+    [SerializeField]
+    private int _startingMoney = 5;
+
     private static readonly int NoResource = Animator.StringToHash("NoResource");
-    [SerializeField] private GameObject noPaperWarning;
-    [SerializeField] private GameObject noInkWarning;
-    [SerializeField] private GameObject noLeafletsWarning;
-    [SerializeField] private GameObject noMoneyWarning;
+
+    private readonly ResourceLedger _ledger = new ResourceLedger();
+    private readonly List<Package> _packages = new List<Package>();
+
     private Animator _paperAnimator;
     private Animator _inkAnimator;
     private Animator _leafletsAnimator;
     private Animator _moneyAnimator;
-    [SerializeField] private GameObject paperPrefab;
-    [SerializeField] private GameObject inkPrefab;
-    [SerializeField] private GameObject leafletsPrefab;
-    [SerializeField] private GameObject moneyPrefab;
-    [SerializeField] private Transform resourceSpawnPoint;
-    private List<GameObject> _resources = new List<GameObject>(); 
-    [SerializeField] private GameObject packagePrefab;
-    [SerializeField] private int itemsPerPackage = 3;
 
-    
-// ---------------- PAPER ----------------
-    public int paper
+    public int Paper => _ledger.Paper;
+    public int Ink => _ledger.Ink;
+    public int Leaflets => _ledger.Leaflets;
+    public int Money => _ledger.Money;
+    public int Trust => _ledger.Trust;
+
+    private void OnValidate()
     {
-        get => _paper;
-        set
-        {
-            if (value < 0) value = 0;
-
-            if (value > _paper)
-                SpawnResource(paperPrefab, value - _paper);
-            else if (value < _paper)
-                DestroyResource(paperPrefab, _paper - value);
-
-            _paper = value;
-            UpdatePaper();
-        }
+        if (_itemsPerPackage < 1)
+            _itemsPerPackage = 1;
     }
-    private int _paper;
-    [SerializeField] private TextMeshProUGUI paperText;
-
-
-// ---------------- INK ----------------
-
-    public int ink
-    {
-        get => _ink;
-        set
-        {
-            if (value < 0) value = 0;
-
-            if (value > _ink)
-                SpawnResource(inkPrefab, value - _ink);
-            else if (value < _ink)
-                DestroyResource(inkPrefab, _ink - value);
-
-            _ink = value;
-            UpdateInk();
-        }
-    }
-    private int _ink;
-    [SerializeField] private TextMeshProUGUI inkText;
-
-
-// ---------------- LEAFLETS ----------------
-
-    public int leaflets
-    {
-        get => _leaflets;
-        set
-        {
-            if (value < 0) value = 0;
-
-            if (value > _leaflets)
-                SpawnResource(leafletsPrefab, value - _leaflets);
-            else if (value < _leaflets)
-                DestroyResource(leafletsPrefab, _leaflets - value);
-
-            _leaflets = value;
-            UpdateLeaflets();
-        }
-    }
-    private int _leaflets;
-    [SerializeField] private TextMeshProUGUI leafletsText;
-
-
-// ---------------- MONEY ----------------
-
-    public int money
-    {
-        get => _money;
-        set
-        {
-            if (value < 0) value = 0;
-
-            if (value > _money)
-                SpawnResource(moneyPrefab, value - _money);
-            else if (value < _money)
-                DestroyResource(moneyPrefab, _money - value);
-
-            _money = value;
-            UpdateMoney();
-        }
-    }
-    private int _money;
-    [SerializeField] private TextMeshProUGUI moneyText;
-
-    public int trust
-    {
-        get => _trust;
-        set
-        {
-            _trust = value;
-            UpdateTrust();
-        }
-    }
-    private int _trust;
-    [SerializeField] private Slider trustSlider;
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        Assert.IsNotNull(
+            _resourceSpawnPoint,
+            $"[{nameof(ResourceManager)}] Spawn point unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _packagePrefab,
+            $"[{nameof(ResourceManager)}] Package prefab unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _noPaperWarning,
+            $"[{nameof(ResourceManager)}] Paper warning unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _noInkWarning,
+            $"[{nameof(ResourceManager)}] Ink warning unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _noLeafletsWarning,
+            $"[{nameof(ResourceManager)}] Leaflets warning unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _noMoneyWarning,
+            $"[{nameof(ResourceManager)}] Money warning unassigned on {name}!"
+        );
+
+        _paperAnimator = _noPaperWarning.GetComponent<Animator>();
+        _inkAnimator = _noInkWarning.GetComponent<Animator>();
+        _leafletsAnimator = _noLeafletsWarning.GetComponent<Animator>();
+        _moneyAnimator = _noMoneyWarning.GetComponent<Animator>();
+
+        _ledger.OnResourceChanged += HandleResourceChanged;
+        _ledger.OnInsufficientResource += HandleInsufficientResource;
     }
-    
+
+    private void OnDestroy()
+    {
+        _ledger.OnResourceChanged -= HandleResourceChanged;
+        _ledger.OnInsufficientResource -= HandleInsufficientResource;
+    }
+
     private void Start()
     {
-        paper += 2;
-        money += 5;
-        ink += 2;
-        UpdatePaper();
-        UpdateInk();
-        UpdateLeaflets();
-        UpdateMoney();
-        _paperAnimator = noPaperWarning.GetComponent<Animator>();
-        _inkAnimator = noInkWarning.GetComponent<Animator>();
-        _leafletsAnimator = noLeafletsWarning.GetComponent<Animator>();
-        _moneyAnimator = noMoneyWarning.GetComponent<Animator>();
-    }
-
-private void SpawnResource(GameObject prefab, int amount)
-{
-    int spawned = 0;
-
-    while (spawned < amount)
-    {
-        // Tworzymy paczkę
-        var packageGO = Instantiate(packagePrefab, resourceSpawnPoint.position, Quaternion.identity);
-        var package = packageGO.GetComponent<Package>();
-
-        // Ile itemów wrzucić do tej paczki?
-        int remaining = amount - spawned;
-        int count = Mathf.Min(itemsPerPackage, remaining);
-
-        for (int i = 0; i < count; i++)
-        {
-            Vector3 offset = new Vector3(
-                Random.Range(-0.15f, 0.15f),
-                Random.Range(-0.15f, 0.15f),
-                0f
-            );
-            
-            GameObject item = Instantiate(prefab, packageGO.transform.position + offset, Quaternion.identity);
-            package.AddItem(item);
-        }
-
-        spawned += count;
-    }
-}
-
-
-private void DestroyResource(GameObject prefab, int amount)
-{
-    int toRemove = amount;
-
-    // Usuń z pojedynczych obiektów
-    for (int i = _resources.Count - 1; i >= 0 && toRemove > 0; i--)
-    {
-        var res = _resources[i];
-        if (!res) continue;
-
-        if (res.name.Contains(prefab.name))
-        {
-            Destroy(res);
-            _resources.RemoveAt(i);
-            toRemove--;
-        }
-    }
-
-    if (toRemove <= 0) return;
-
-    // Usuń z paczek
-    foreach (Package p in FindObjectsOfType<Package>())
-    {
-        var items = p.GetItems();
-        for (int i = items.Count - 1; i >= 0 && toRemove > 0; i--)
-        {
-            if (items[i].name.Contains(prefab.name))
-            {
-                Destroy(items[i]);
-                items.RemoveAt(i);
-                toRemove--;
-            }
-        }
-        if (toRemove <= 0) break;
-    }
-}
-
-
-
-    private void UpdatePaper()
-    {
-        paperText.text = $"{_paper}";
-    }
-    
-    private void UpdateInk()
-    {
-        inkText.text = $"{_ink}";
-    }
-    
-    private void UpdateLeaflets()
-    {
-        leafletsText.text = $"{_leaflets}";
-    }
-    
-    private void UpdateMoney()
-    {
-        moneyText.text = $"{_money}";
-    }
-
-    private void UpdateTrust()
-    {
-        trustSlider.value = _trust / 100f;
-    }
-
-    public bool TrySpend(int costPaper = 0, int costInk = 0, int costLeaflets = 0, int costMoney = 0)
-    {
-        if (paper < costPaper)
-        {
-            DisplayNoResourceWarning("paper");
-        }
-        if (ink < costInk)
-        {
-            DisplayNoResourceWarning("ink");
-        }
-        if (leaflets < costLeaflets)
-        {
-            DisplayNoResourceWarning("leaflets");
-        }
-        if (money < costMoney)
-        {
-            DisplayNoResourceWarning("money");
-        }
-        if (paper < costPaper || ink < costInk || leaflets < costLeaflets || money < costMoney) return false;
-        paper -= costPaper;
-        ink -= costInk;
-        leaflets -= costLeaflets;
-        money -= costMoney;
-        return true;
-    }
-
-    private void DisplayNoResourceWarning(string resource)
-    {
-        switch (resource)
-        {
-            case "paper":
-                NoPaperWarning();
-                break;
-            case "ink":
-                NoInkWarning();
-                break;
-            case "leaflets":
-                NoLeafletsWarning();
-                break;
-            case "money":
-                NoMoneyWarning();
-                break;
-        }
-    }
-
-    private void NoPaperWarning()
-    {
-        _paperAnimator.SetTrigger(NoResource);
-    }
-
-    private void NoInkWarning()
-    {
-        _inkAnimator.SetTrigger(NoResource);
-    }
-    
-    private void NoLeafletsWarning()
-    {
-        _leafletsAnimator.SetTrigger(NoResource);
-    }
-    
-    private void NoMoneyWarning()
-    {
-        _moneyAnimator.SetTrigger(NoResource);
+        _ledger.Paper += _startingPaper;
+        _ledger.Ink += _startingInk;
+        _ledger.Money += _startingMoney;
+        RefreshAllText();
+        UpdateTrust();
     }
 
     private void Update()
     {
+        // Debug/testing hotkeys retained from the original build.
         if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            EventSystem.RumorsSpread();
-        }
+            GameEvents.RumorsSpread();
 
         if (Input.GetKeyDown(KeyCode.Z))
-        {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void AddPaper(int amount) => _ledger.Paper += amount;
+
+    public void AddInk(int amount) => _ledger.Ink += amount;
+
+    public void AddLeaflets(int amount) => _ledger.Leaflets += amount;
+
+    public void AddMoney(int amount) => _ledger.Money += amount;
+
+    public void AddTrust(int amount) => _ledger.Trust += amount;
+
+    public bool TrySpend(
+        int costPaper = 0,
+        int costInk = 0,
+        int costLeaflets = 0,
+        int costMoney = 0
+    ) => _ledger.TrySpend(costPaper, costInk, costLeaflets, costMoney);
+
+    private void HandleResourceChanged(ResourceType type, int previous, int current)
+    {
+        if (type == ResourceType.Trust)
+        {
+            UpdateTrust();
+            return;
+        }
+
+        int delta = current - previous;
+        GameObject prefab = PrefabFor(type);
+        if (delta > 0)
+            SpawnResource(prefab, delta);
+        else if (delta < 0)
+            DestroyResource(prefab, -delta);
+
+        UpdateCounterText(type, current);
+    }
+
+    private void HandleInsufficientResource(ResourceType type)
+    {
+        Animator animator = AnimatorFor(type);
+        if (animator != null)
+            animator.SetTrigger(NoResource);
+    }
+
+    private void SpawnResource(GameObject prefab, int amount)
+    {
+        int spawned = 0;
+        while (spawned < amount)
+        {
+            var packageGo = Instantiate(
+                _packagePrefab,
+                _resourceSpawnPoint.position,
+                Quaternion.identity
+            );
+            var package = packageGo.GetComponent<Package>();
+            if (package != null)
+                _packages.Add(package);
+
+            int remaining = amount - spawned;
+            int count = Mathf.Min(_itemsPerPackage, remaining);
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 offset = new Vector3(
+                    Random.Range(-0.15f, 0.15f),
+                    Random.Range(-0.15f, 0.15f),
+                    0f
+                );
+                GameObject item = Instantiate(
+                    prefab,
+                    packageGo.transform.position + offset,
+                    Quaternion.identity
+                );
+                package?.AddItem(item);
+            }
+
+            spawned += count;
         }
     }
-    
+
+    private void DestroyResource(GameObject prefab, int amount)
+    {
+        int toRemove = amount;
+
+        for (int i = _packages.Count - 1; i >= 0 && toRemove > 0; i--)
+        {
+            Package package = _packages[i];
+            if (package == null)
+            {
+                _packages.RemoveAt(i);
+                continue;
+            }
+
+            List<GameObject> items = package.Items;
+            for (int j = items.Count - 1; j >= 0 && toRemove > 0; j--)
+            {
+                if (items[j].name.Contains(prefab.name))
+                {
+                    Destroy(items[j]);
+                    items.RemoveAt(j);
+                    toRemove--;
+                }
+            }
+        }
+    }
+
+    private GameObject PrefabFor(ResourceType type)
+    {
+        switch (type)
+        {
+            case ResourceType.Paper:
+                return _paperPrefab;
+            case ResourceType.Ink:
+                return _inkPrefab;
+            case ResourceType.Leaflets:
+                return _leafletsPrefab;
+            case ResourceType.Money:
+                return _moneyPrefab;
+            default:
+                return null;
+        }
+    }
+
+    private Animator AnimatorFor(ResourceType type)
+    {
+        switch (type)
+        {
+            case ResourceType.Paper:
+                return _paperAnimator;
+            case ResourceType.Ink:
+                return _inkAnimator;
+            case ResourceType.Leaflets:
+                return _leafletsAnimator;
+            case ResourceType.Money:
+                return _moneyAnimator;
+            default:
+                return null;
+        }
+    }
+
+    private void UpdateCounterText(ResourceType type, int value)
+    {
+        switch (type)
+        {
+            case ResourceType.Paper:
+                _paperText.text = $"{value}";
+                break;
+            case ResourceType.Ink:
+                _inkText.text = $"{value}";
+                break;
+            case ResourceType.Leaflets:
+                _leafletsText.text = $"{value}";
+                break;
+            case ResourceType.Money:
+                _moneyText.text = $"{value}";
+                break;
+        }
+    }
+
+    private void RefreshAllText()
+    {
+        _paperText.text = $"{_ledger.Paper}";
+        _inkText.text = $"{_ledger.Ink}";
+        _leafletsText.text = $"{_ledger.Leaflets}";
+        _moneyText.text = $"{_ledger.Money}";
+    }
+
+    private void UpdateTrust()
+    {
+        _trustSlider.value = _ledger.Trust / 100f;
+    }
 }

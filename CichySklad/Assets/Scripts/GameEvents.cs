@@ -1,7 +1,17 @@
 using System;
-using UnityEngine;
 
-public class EventSystem : MonoBehaviour
+/// <summary>
+/// Global gameplay event channel — a plain static bus that lets systems talk sideways without
+/// holding references to each other (e.g. a choice raises <see cref="Arrest"/>; the death and
+/// dialogue systems merely listen). Deliberately NOT a <c>MonoBehaviour</c>: it owns no scene
+/// state and is never attached to a GameObject. Renamed from the old <c>EventSystem</c> to avoid
+/// colliding with <c>UnityEngine.EventSystems.EventSystem</c>.
+///
+/// Note: static event subscriptions survive scene loads. Every listener that subscribes in
+/// <c>OnEnable</c> must unsubscribe in <c>OnDisable</c> (all handlers in this project do) to
+/// avoid leaks and duplicate invocations across reloads.
+/// </summary>
+public static class GameEvents
 {
     // 1. Kontrole
     public static event Action OnKnockAtDoor;
@@ -82,86 +92,127 @@ public class EventSystem : MonoBehaviour
     public static event Action OnBuyPaperOffer;
     public static event Action OnArrest;
 
+    // 9. Gameplay deltas (fired by objects that cannot hold a scene reference, e.g. spawned prefabs)
+    public static event Action<float> OnRiskDelta;
+
     // =======================
     // 1. Kontrole
     public static void KnockAtDoor() => OnKnockAtDoor?.Invoke();
+
     public static void KnockOpenChoice() => OnKnockOpenChoice?.Invoke();
+
     public static void KnockHideChoice() => OnKnockHideChoice?.Invoke();
 
     public static void NeighborPeeking() => OnNeighborPeeking?.Invoke();
+
     public static void NeighborIgnored() => OnNeighborIgnored?.Invoke();
+
     public static void NeighborDismissed() => OnNeighborDismissed?.Invoke();
 
     public static void OchranaStepsHeard() => OnOchranaStepsHeard?.Invoke();
+
     public static void OchranaPauseAccepted() => OnOchranaPauseAccepted?.Invoke();
+
     public static void OchranaPauseDeclined() => OnOchranaPauseDeclined?.Invoke();
 
-    public static void OfficerInspectionStarted(int itemsToHide) => OnOfficerInspectionStarted?.Invoke(itemsToHide);
+    public static void OfficerInspectionStarted(int itemsToHide) =>
+        OnOfficerInspectionStarted?.Invoke(itemsToHide);
+
     public static void OfficerInspectionSuccessful() => OnOfficerInspectionSuccessful?.Invoke();
+
     public static void OfficerInspectionFailed() => OnOfficerInspectionFailed?.Invoke();
 
     // 2. Zasoby
     public static void OutOfInk() => OnOutOfInk?.Invoke();
+
     public static void OutOfInkUseNow() => OnOutOfInkUseNow?.Invoke();
+
     public static void OutOfInkSave() => OnOutOfInkSave?.Invoke();
 
     public static void LostPaperBatch() => OnLostPaperBatch?.Invoke();
+
     public static void LostPaperPayInformer() => OnLostPaperPayInformer?.Invoke();
+
     public static void LostPaperIgnore() => OnLostPaperIgnore?.Invoke();
 
     public static void MoistureDamage() => OnMoistureDamage?.Invoke();
+
     public static void MoistureThrow() => OnMoistureThrow?.Invoke();
+
     public static void MoistureRisk() => OnMoistureRisk?.Invoke();
 
     public static void SecretDonation() => OnSecretDonation?.Invoke();
+
     public static void SecretDonationTake() => OnSecretDonationTake?.Invoke();
+
     public static void SecretDonationLeave() => OnSecretDonationLeave?.Invoke();
 
     // 3. Donosiciele / sąsiedzi
     public static void NeighborSawCourier() => OnNeighborSawCourier?.Invoke();
+
     public static void NeighborBribe() => OnNeighborBribe?.Invoke();
 
     public static void InformerAsks() => OnInformerAsks?.Invoke();
+
     public static void InformerLie() => OnInformerLie?.Invoke();
+
     public static void InformerDismiss() => OnInformerDismiss?.Invoke();
+
     public static void InformerIgnore() => OnInformerIgnore?.Invoke();
 
     public static void RumorsSpread() => OnRumorsSpread?.Invoke();
 
     // 4. Kurier / przesyłki
     public static void CourierInjured() => OnCourierInjured?.Invoke();
+
     public static void CourierHelp() => OnCourierHelp?.Invoke();
+
     public static void CourierIgnore() => OnCourierIgnore?.Invoke();
 
     public static void UrgentDelivery() => OnUrgentDelivery?.Invoke();
+
     public static void PackageUncertain() => OnPackageUncertain?.Invoke();
+
     public static void PackageOpen() => OnPackageOpen?.Invoke();
+
     public static void PackageWait() => OnPackageWait?.Invoke();
 
     // 5. Sabotage / niepewne kontakty
     public static void StuckHidingSpot() => OnStuckHidingSpot?.Invoke();
+
     public static void StuckRisk() => OnStuckRisk?.Invoke();
+
     public static void StuckIgnore() => OnStuckIgnore?.Invoke();
 
     public static void StrangerNeedsHelp() => OnStrangerNeedsHelp?.Invoke();
+
     public static void StrangerGiveResources() => OnStrangerGiveResources?.Invoke();
+
     public static void StrangerDismiss() => OnStrangerDismiss?.Invoke();
 
     public static void LampExplosion() => OnLampExplosion?.Invoke();
 
     // 6. Fabularne
     public static void LetterFromPanKowal() => OnLetterFromPanKowal?.Invoke();
+
     public static void MariaWarns() => OnMariaWarns?.Invoke();
+
     public static void InformerDisappears() => OnInformerDisappears?.Invoke();
 
     // 7. Stresujące / natychmiastowe
     public static void LoudNoise() => OnLoudNoise?.Invoke();
+
     public static void FireCandle() => OnFireCandle?.Invoke();
+
     public static void BrokenLock() => OnBrokenLock?.Invoke();
 
     // 8. Ekonomiczne / łapówki
     public static void OchranaBribe() => OnOchranaBribe?.Invoke();
+
     public static void BuyPaperOffer() => OnBuyPaperOffer?.Invoke();
 
     public static void Arrest() => OnArrest?.Invoke();
+
+    // 9. Gameplay deltas
+    public static void RaiseRisk(float amount) => OnRiskDelta?.Invoke(amount);
 }

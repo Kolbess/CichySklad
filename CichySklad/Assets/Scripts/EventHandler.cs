@@ -1,116 +1,143 @@
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 
+/// <summary>
+/// Listens to the global <see cref="GameEvents"/> channel and turns each narrative beat into a
+/// dialogue prompt (with choices) that mutates risk and resources through injected managers. This
+/// is the seam between the abstract event bus and the concrete scene systems.
+/// </summary>
 public class EventHandler : MonoBehaviour
 {
-    [SerializeField] private DialogueSystem dialogueSystem;
-    [SerializeField] private InspectionSystem inspectionSystem;
+    [Header("Dependencies")]
+    [Tooltip("Dialogue presenter used to show prompts and choices. Required.")]
+    [FormerlySerializedAs("dialogueSystem")]
+    [SerializeField]
+    private DialogueSystem _dialogueSystem;
+
+    [Tooltip("Inspection controller started/ended by control events. Required.")]
+    [FormerlySerializedAs("inspectionSystem")]
+    [SerializeField]
+    private InspectionSystem _inspectionSystem;
+
+    [Tooltip("Risk source adjusted by player choices. Required.")]
+    [SerializeField]
+    private RiskManager _riskManager;
+
+    [Tooltip("Resource source adjusted by player choices. Required.")]
+    [SerializeField]
+    private ResourceManager _resourceManager;
+
+    private void Awake()
+    {
+        Assert.IsNotNull(
+            _dialogueSystem,
+            $"[{nameof(EventHandler)}] DialogueSystem unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _inspectionSystem,
+            $"[{nameof(EventHandler)}] InspectionSystem unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _riskManager,
+            $"[{nameof(EventHandler)}] RiskManager unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _resourceManager,
+            $"[{nameof(EventHandler)}] ResourceManager unassigned on {name}!"
+        );
+    }
 
     private void OnEnable()
     {
-        // =======================
         // 1. Kontrole
-        EventSystem.OnKnockAtDoor += HandleKnockAtDoor;
-        EventSystem.OnNeighborPeeking += HandleNeighborPeeking;
-        EventSystem.OnOchranaStepsHeard += HandleOchranaSteps;
-        EventSystem.OnOfficerInspectionStarted += HandleOfficerInspectionStarted;
+        GameEvents.OnKnockAtDoor += HandleKnockAtDoor;
+        GameEvents.OnNeighborPeeking += HandleNeighborPeeking;
+        GameEvents.OnOchranaStepsHeard += HandleOchranaSteps;
+        GameEvents.OnOfficerInspectionStarted += HandleOfficerInspectionStarted;
 
-        // =======================
         // 2. Zasoby
-        EventSystem.OnOutOfInk += HandleOutOfInk;
-        EventSystem.OnLostPaperBatch += HandleLostPaper;
-        EventSystem.OnMoistureDamage += HandleMoistureDamage;
-        EventSystem.OnSecretDonation += HandleSecretDonation;
+        GameEvents.OnOutOfInk += HandleOutOfInk;
+        GameEvents.OnLostPaperBatch += HandleLostPaper;
+        GameEvents.OnMoistureDamage += HandleMoistureDamage;
+        GameEvents.OnSecretDonation += HandleSecretDonation;
 
-        // =======================
         // 3. Donosiciele / sąsiedzi
-        EventSystem.OnNeighborSawCourier += HandleNeighborSawCourier;
-        EventSystem.OnInformerAsks += HandleInformerAsks;
-        EventSystem.OnRumorsSpread += HandleRumorsSpread;
+        GameEvents.OnNeighborSawCourier += HandleNeighborSawCourier;
+        GameEvents.OnInformerAsks += HandleInformerAsks;
+        GameEvents.OnRumorsSpread += HandleRumorsSpread;
 
-        // =======================
         // 4. Kurier / przesyłki
-        EventSystem.OnCourierInjured += HandleCourierInjured;
-        EventSystem.OnUrgentDelivery += HandleUrgentDelivery;
-        EventSystem.OnPackageUncertain += HandlePackageUncertain;
+        GameEvents.OnCourierInjured += HandleCourierInjured;
+        GameEvents.OnUrgentDelivery += HandleUrgentDelivery;
+        GameEvents.OnPackageUncertain += HandlePackageUncertain;
 
-        // =======================
         // 5. Sabotage
-        EventSystem.OnStuckHidingSpot += HandleStuckHidingSpot;
-        EventSystem.OnStrangerNeedsHelp += HandleStrangerNeedsHelp;
-        EventSystem.OnLampExplosion += HandleLampExplosion;
+        GameEvents.OnStuckHidingSpot += HandleStuckHidingSpot;
+        GameEvents.OnStrangerNeedsHelp += HandleStrangerNeedsHelp;
+        GameEvents.OnLampExplosion += HandleLampExplosion;
 
-        // =======================
         // 6. Fabularne
-        EventSystem.OnLetterFromPanKowal += HandleLetterFromPanKowal;
-        EventSystem.OnMariaWarns += HandleMariaWarns;
-        EventSystem.OnInformerDisappears += HandleInformerDisappears;
+        GameEvents.OnLetterFromPanKowal += HandleLetterFromPanKowal;
+        GameEvents.OnMariaWarns += HandleMariaWarns;
+        GameEvents.OnInformerDisappears += HandleInformerDisappears;
 
-        // =======================
         // 7. Stresujące
-        EventSystem.OnLoudNoise += HandleLoudNoise;
-        EventSystem.OnFireCandle += HandleFireCandle;
-        EventSystem.OnBrokenLock += HandleBrokenLock;
+        GameEvents.OnLoudNoise += HandleLoudNoise;
+        GameEvents.OnFireCandle += HandleFireCandle;
+        GameEvents.OnBrokenLock += HandleBrokenLock;
 
-        // =======================
         // 8. Ekonomiczne
-        EventSystem.OnOchranaBribe += HandleOchranaBribe;
-        EventSystem.OnBuyPaperOffer += HandleBuyPaperOffer;
+        GameEvents.OnOchranaBribe += HandleOchranaBribe;
+        GameEvents.OnBuyPaperOffer += HandleBuyPaperOffer;
 
-        EventSystem.OnArrest += HandleArrest;
+        GameEvents.OnArrest += HandleArrest;
     }
 
     private void OnDisable()
     {
-        // =======================
         // 1. Kontrole
-        EventSystem.OnKnockAtDoor -= HandleKnockAtDoor;
-        EventSystem.OnNeighborPeeking -= HandleNeighborPeeking;
-        EventSystem.OnOchranaStepsHeard -= HandleOchranaSteps;
-        EventSystem.OnOfficerInspectionStarted -= HandleOfficerInspectionStarted;
+        GameEvents.OnKnockAtDoor -= HandleKnockAtDoor;
+        GameEvents.OnNeighborPeeking -= HandleNeighborPeeking;
+        GameEvents.OnOchranaStepsHeard -= HandleOchranaSteps;
+        GameEvents.OnOfficerInspectionStarted -= HandleOfficerInspectionStarted;
 
-        // =======================
         // 2. Zasoby
-        EventSystem.OnOutOfInk -= HandleOutOfInk;
-        EventSystem.OnLostPaperBatch -= HandleLostPaper;
-        EventSystem.OnMoistureDamage -= HandleMoistureDamage;
-        EventSystem.OnSecretDonation -= HandleSecretDonation;
+        GameEvents.OnOutOfInk -= HandleOutOfInk;
+        GameEvents.OnLostPaperBatch -= HandleLostPaper;
+        GameEvents.OnMoistureDamage -= HandleMoistureDamage;
+        GameEvents.OnSecretDonation -= HandleSecretDonation;
 
-        // =======================
         // 3. Donosiciele / sąsiedzi
-        EventSystem.OnNeighborSawCourier -= HandleNeighborSawCourier;
-        EventSystem.OnInformerAsks -= HandleInformerAsks;
-        EventSystem.OnRumorsSpread -= HandleRumorsSpread;
+        GameEvents.OnNeighborSawCourier -= HandleNeighborSawCourier;
+        GameEvents.OnInformerAsks -= HandleInformerAsks;
+        GameEvents.OnRumorsSpread -= HandleRumorsSpread;
 
-        // =======================
         // 4. Kurier / przesyłki
-        EventSystem.OnCourierInjured -= HandleCourierInjured;
-        EventSystem.OnUrgentDelivery -= HandleUrgentDelivery;
-        EventSystem.OnPackageUncertain -= HandlePackageUncertain;
+        GameEvents.OnCourierInjured -= HandleCourierInjured;
+        GameEvents.OnUrgentDelivery -= HandleUrgentDelivery;
+        GameEvents.OnPackageUncertain -= HandlePackageUncertain;
 
-        // =======================
         // 5. Sabotage
-        EventSystem.OnStuckHidingSpot -= HandleStuckHidingSpot;
-        EventSystem.OnStrangerNeedsHelp -= HandleStrangerNeedsHelp;
-        EventSystem.OnLampExplosion -= HandleLampExplosion;
+        GameEvents.OnStuckHidingSpot -= HandleStuckHidingSpot;
+        GameEvents.OnStrangerNeedsHelp -= HandleStrangerNeedsHelp;
+        GameEvents.OnLampExplosion -= HandleLampExplosion;
 
-        // =======================
         // 6. Fabularne
-        EventSystem.OnLetterFromPanKowal -= HandleLetterFromPanKowal;
-        EventSystem.OnMariaWarns -= HandleMariaWarns;
-        EventSystem.OnInformerDisappears -= HandleInformerDisappears;
+        GameEvents.OnLetterFromPanKowal -= HandleLetterFromPanKowal;
+        GameEvents.OnMariaWarns -= HandleMariaWarns;
+        GameEvents.OnInformerDisappears -= HandleInformerDisappears;
 
-        // =======================
         // 7. Stresujące
-        EventSystem.OnLoudNoise -= HandleLoudNoise;
-        EventSystem.OnFireCandle -= HandleFireCandle;
-        EventSystem.OnBrokenLock -= HandleBrokenLock;
+        GameEvents.OnLoudNoise -= HandleLoudNoise;
+        GameEvents.OnFireCandle -= HandleFireCandle;
+        GameEvents.OnBrokenLock -= HandleBrokenLock;
 
-        // =======================
         // 8. Ekonomiczne
-        EventSystem.OnOchranaBribe -= HandleOchranaBribe;
-        EventSystem.OnBuyPaperOffer -= HandleBuyPaperOffer;
+        GameEvents.OnOchranaBribe -= HandleOchranaBribe;
+        GameEvents.OnBuyPaperOffer -= HandleBuyPaperOffer;
 
-        EventSystem.OnArrest -= HandleArrest;
+        GameEvents.OnArrest -= HandleArrest;
     }
 
     // =======================
@@ -119,47 +146,57 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Otwórz", () =>
-            {
-                RiskManager.Instance.ReduceRisk(10);
-                inspectionSystem.StartInspection();
-            }),
-            new DialogueSystem.Choice("Nie otwieraj", () =>
-            {
-                RiskManager.Instance.AddRisk(10);
-                inspectionSystem.StartInspection();
-            })
+            new DialogueSystem.Choice(
+                "Otwórz",
+                () =>
+                {
+                    _riskManager.ReduceRisk(10);
+                    _inspectionSystem.StartInspection();
+                }
+            ),
+            new DialogueSystem.Choice(
+                "Nie otwieraj",
+                () =>
+                {
+                    _riskManager.AddRisk(10);
+                    _inspectionSystem.StartInspection();
+                }
+            ),
         };
-        dialogueSystem.ShowDialogueWithChoices("Puk... Puk...", choices, dialogueSystem.GetPortraitSprite("ochrana"));
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Puk... Puk...",
+            choices,
+            _dialogueSystem.GetPortraitSprite("ochrana")
+        );
     }
 
     private void HandleNeighborPeeking()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Zignoruj", () =>
-            {
-                RiskManager.Instance.AddRisk(15);
-            }),
-            new DialogueSystem.Choice("Grzecznie wyproś", () => RiskManager.Instance.ReduceRisk(5))
+            new DialogueSystem.Choice("Zignoruj", () => _riskManager.AddRisk(15)),
+            new DialogueSystem.Choice("Grzecznie wyproś", () => _riskManager.ReduceRisk(5)),
         };
-        dialogueSystem.ShowDialogueWithChoices("Mmm... A co on tam robi, może donosik?", choices, dialogueSystem.GetPortraitSprite("neighbour"));
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Mmm... A co on tam robi, może donosik?",
+            choices,
+            _dialogueSystem.GetPortraitSprite("neighbour")
+        );
     }
 
     private void HandleOchranaSteps()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Pause actions", () => EventSystem.OchranaPauseAccepted()),
-            new DialogueSystem.Choice("Continue working", () => EventSystem.OchranaPauseDeclined())
+            new DialogueSystem.Choice("Pause actions", GameEvents.OchranaPauseAccepted),
+            new DialogueSystem.Choice("Continue working", GameEvents.OchranaPauseDeclined),
         };
-        dialogueSystem.ShowDialogueWithChoices("You hear Ochrana's footsteps outside.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("You hear Ochrana's footsteps outside.", choices);
     }
 
     private void HandleOfficerInspectionStarted(int itemsToHide)
     {
-        dialogueSystem.ShowDialogue($"Officer is inspecting! Hide {itemsToHide} items quickly!");
-        // Here the actual logic for hiding items would be in your game code
+        _dialogueSystem.ShowDialogue($"Officer is inspecting! Hide {itemsToHide} items quickly!");
     }
 
     // =======================
@@ -168,40 +205,40 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Use remaining ink", () => EventSystem.OutOfInkUseNow()),
-            new DialogueSystem.Choice("Save it", () => EventSystem.OutOfInkSave())
+            new DialogueSystem.Choice("Use remaining ink", GameEvents.OutOfInkUseNow),
+            new DialogueSystem.Choice("Save it", GameEvents.OutOfInkSave),
         };
-        dialogueSystem.ShowDialogueWithChoices("You're out of ink!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("You're out of ink!", choices);
     }
 
     private void HandleLostPaper()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Pay informer", () => EventSystem.LostPaperPayInformer()),
-            new DialogueSystem.Choice("Ignore", () => EventSystem.LostPaperIgnore())
+            new DialogueSystem.Choice("Pay informer", GameEvents.LostPaperPayInformer),
+            new DialogueSystem.Choice("Ignore", GameEvents.LostPaperIgnore),
         };
-        dialogueSystem.ShowDialogueWithChoices("A paper batch was lost!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("A paper batch was lost!", choices);
     }
 
     private void HandleMoistureDamage()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Throw damaged paper", () => EventSystem.MoistureThrow()),
-            new DialogueSystem.Choice("Use risky paper", () => EventSystem.MoistureRisk())
+            new DialogueSystem.Choice("Throw damaged paper", GameEvents.MoistureThrow),
+            new DialogueSystem.Choice("Use risky paper", GameEvents.MoistureRisk),
         };
-        dialogueSystem.ShowDialogueWithChoices("Some paper got wet.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Some paper got wet.", choices);
     }
 
     private void HandleSecretDonation()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Take donation", () => EventSystem.SecretDonationTake()),
-            new DialogueSystem.Choice("Leave it", () => EventSystem.SecretDonationLeave())
+            new DialogueSystem.Choice("Take donation", GameEvents.SecretDonationTake),
+            new DialogueSystem.Choice("Leave it", GameEvents.SecretDonationLeave),
         };
-        dialogueSystem.ShowDialogueWithChoices("A secret donation appears!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("A secret donation appears!", choices);
     }
 
     // =======================
@@ -210,27 +247,27 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Bribe neighbor", () => EventSystem.NeighborBribe()),
-            new DialogueSystem.Choice("Do nothing", () => { ResourceManager.Instance.trust -= 5; })
+            new DialogueSystem.Choice("Bribe neighbor", GameEvents.NeighborBribe),
+            new DialogueSystem.Choice("Do nothing", () => _resourceManager.AddTrust(-5)),
         };
-        dialogueSystem.ShowDialogueWithChoices("Neighbor saw the courier!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Neighbor saw the courier!", choices);
     }
 
     private void HandleInformerAsks()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Lie", () => EventSystem.InformerLie()),
-            new DialogueSystem.Choice("Dismiss", () => EventSystem.InformerDismiss()),
-            new DialogueSystem.Choice("Ignore", () => EventSystem.InformerIgnore())
+            new DialogueSystem.Choice("Lie", GameEvents.InformerLie),
+            new DialogueSystem.Choice("Dismiss", GameEvents.InformerDismiss),
+            new DialogueSystem.Choice("Ignore", GameEvents.InformerIgnore),
         };
-        dialogueSystem.ShowDialogueWithChoices("Informer is asking about your work.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Informer is asking about your work.", choices);
     }
 
     private void HandleRumorsSpread()
     {
-        dialogueSystem.ShowDialogue("Rumors are spreading. Passive risk increased.");
-        RiskManager.Instance.AddRisk(2);
+        _dialogueSystem.ShowDialogue("Rumors are spreading. Passive risk increased.");
+        _riskManager.AddRisk(2);
     }
 
     // =======================
@@ -239,33 +276,43 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Pomóż", () =>
-            {
-                RiskManager.Instance.AddRisk(10);
-                ResourceManager.Instance.trust += 10;
-            }),
-            new DialogueSystem.Choice("Zignoruj", () =>
-            {
-                ResourceManager.Instance.trust -= 5;
-                RiskManager.Instance.ReduceRisk(5);
-            })
+            new DialogueSystem.Choice(
+                "Pomóż",
+                () =>
+                {
+                    _riskManager.AddRisk(10);
+                    _resourceManager.AddTrust(10);
+                }
+            ),
+            new DialogueSystem.Choice(
+                "Zignoruj",
+                () =>
+                {
+                    _resourceManager.AddTrust(-5);
+                    _riskManager.ReduceRisk(5);
+                }
+            ),
         };
-        dialogueSystem.ShowDialogueWithChoices("Pomóż mi jestem twoim kurierem", choices, dialogueSystem.GetPortraitSprite("kowal"));
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Pomóż mi jestem twoim kurierem",
+            choices,
+            _dialogueSystem.GetPortraitSprite("kowal")
+        );
     }
 
     private void HandleUrgentDelivery()
     {
-        dialogueSystem.ShowDialogue("Maria delivered urgent materials. Make space quickly!");
+        _dialogueSystem.ShowDialogue("Maria delivered urgent materials. Make space quickly!");
     }
 
     private void HandlePackageUncertain()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Open package", () => EventSystem.PackageOpen()),
-            new DialogueSystem.Choice("Wait", () => EventSystem.PackageWait())
+            new DialogueSystem.Choice("Open package", GameEvents.PackageOpen),
+            new DialogueSystem.Choice("Wait", GameEvents.PackageWait),
         };
-        dialogueSystem.ShowDialogueWithChoices("Package contents are uncertain.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Package contents are uncertain.", choices);
     }
 
     // =======================
@@ -274,63 +321,65 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Risk it", () => EventSystem.StuckRisk()),
-            new DialogueSystem.Choice("Ignore", () => EventSystem.StuckIgnore())
+            new DialogueSystem.Choice("Risk it", GameEvents.StuckRisk),
+            new DialogueSystem.Choice("Ignore", GameEvents.StuckIgnore),
         };
-        dialogueSystem.ShowDialogueWithChoices("Hiding spot is stuck!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Hiding spot is stuck!", choices);
     }
 
     private void HandleStrangerNeedsHelp()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Give resources", () => EventSystem.StrangerGiveResources()),
-            new DialogueSystem.Choice("Dismiss", () => EventSystem.StrangerDismiss())
+            new DialogueSystem.Choice("Give resources", GameEvents.StrangerGiveResources),
+            new DialogueSystem.Choice("Dismiss", GameEvents.StrangerDismiss),
         };
-        dialogueSystem.ShowDialogueWithChoices("A stranger asks for help.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("A stranger asks for help.", choices);
     }
 
     private void HandleLampExplosion()
     {
-        dialogueSystem.ShowDialogue("Small lamp explosion! Risk increased slightly.");
-        RiskManager.Instance.AddRisk(2);
+        _dialogueSystem.ShowDialogue("Small lamp explosion! Risk increased slightly.");
+        _riskManager.AddRisk(2);
     }
 
     // =======================
     // 6. Fabularne
     private void HandleLetterFromPanKowal()
     {
-        dialogueSystem.ShowDialogue("Letter from Pan Kowal received. Contains instructions or moral dilemma.");
+        _dialogueSystem.ShowDialogue(
+            "Letter from Pan Kowal received. Contains instructions or moral dilemma."
+        );
     }
 
     private void HandleMariaWarns()
     {
-        dialogueSystem.ShowDialogue("Maria warns you of possible inspection tomorrow.");
-        RiskManager.Instance.AddRisk(1);
+        _dialogueSystem.ShowDialogue("Maria warns you of possible inspection tomorrow.");
+        _riskManager.AddRisk(1);
     }
 
     private void HandleInformerDisappears()
     {
-        dialogueSystem.ShowDialogue("Informer has disappeared. Situation uncertain.");
+        _dialogueSystem.ShowDialogue("Informer has disappeared. Situation uncertain.");
     }
 
     // =======================
     // 7. Stresujące
     private void HandleLoudNoise()
     {
-        dialogueSystem.ShowDialogue("Loud noise! Quickly hide suspicious items!");
+        _dialogueSystem.ShowDialogue("Loud noise! Quickly hide suspicious items!");
     }
 
     private void HandleFireCandle()
     {
-        ResourceManager.Instance.TrySpend(costPaper: Mathf.Abs(ResourceManager.Instance.paper / 5));
-        dialogueSystem.ShowDialogue("Candle caught fire! Lost some paper.");
+        _resourceManager.TrySpend(costPaper: Mathf.Abs(_resourceManager.Paper / 5));
+        _dialogueSystem.ShowDialogue("Candle caught fire! Lost some paper.");
     }
 
     private void HandleBrokenLock()
     {
-        RiskManager.Instance.AddRisk(3);
-        dialogueSystem.ShowDialogue("Broken lock! Risk increased for the next event.");
+        _riskManager.AddRisk(3);
+        _dialogueSystem.ShowDialogue("Broken lock! Risk increased for the next event.");
     }
 
     // =======================
@@ -341,47 +390,53 @@ public class EventHandler : MonoBehaviour
 
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice($"Zapłać łapówkę:\n {bribe} rubli", () =>
-            {
-                if (ResourceManager.Instance.TrySpend(costMoney: bribe))
+            new DialogueSystem.Choice(
+                $"Zapłać łapówkę:\n {bribe} rubli",
+                () =>
                 {
-                    RiskManager.Instance.ReduceRisk(RiskManager.Instance.CurrentRisk / 2);
-                    inspectionSystem.isCatching = false; // koniec eventu
+                    if (_resourceManager.TrySpend(costMoney: bribe))
+                    {
+                        _riskManager.ReduceRisk(_riskManager.CurrentRisk / 2);
+                        _inspectionSystem.EndCatching();
+                    }
+                    else
+                    {
+                        GameEvents.Arrest();
+                    }
                 }
-                else
+            ),
+            new DialogueSystem.Choice(
+                "Odmów",
+                () =>
                 {
-                    Debug.Log("Trigger Arrest!");
-                    EventSystem.Arrest();
+                    _riskManager.AddRisk(5);
+                    _inspectionSystem.EndCatching();
                 }
-            }),
-
-            new DialogueSystem.Choice("Odmów", () =>
-            {
-                RiskManager.Instance.AddRisk(5);
-                inspectionSystem.isCatching = false; // koniec eventu
-            })
+            ),
         };
 
-        dialogueSystem.ShowDialogueWithChoices(
+        _dialogueSystem.ShowDialogueWithChoices(
             "Płać rublem albo płacz",
             choices,
-            dialogueSystem.GetPortraitSprite("ochrana")
+            _dialogueSystem.GetPortraitSprite("ochrana")
         );
     }
-
 
     private void HandleBuyPaperOffer()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Invest in cheaper paper", () => EventSystem.BuyPaperOffer()),
-            new DialogueSystem.Choice("Ignore offer", () => { /* nothing */ })
+            new DialogueSystem.Choice("Invest in cheaper paper", GameEvents.BuyPaperOffer),
+            new DialogueSystem.Choice("Ignore offer", () => { }),
         };
-        dialogueSystem.ShowDialogueWithChoices("Opportunity to buy cheaper paper. Choose wisely.", choices);
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Opportunity to buy cheaper paper. Choose wisely.",
+            choices
+        );
     }
 
     private void HandleArrest()
     {
-        dialogueSystem.ShowDialogue("Zostałeś Aresztowany! Koniec Gry.");
+        _dialogueSystem.ShowDialogue("Zostałeś Aresztowany! Koniec Gry.");
     }
 }

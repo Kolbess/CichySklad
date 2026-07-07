@@ -1,217 +1,230 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 
+/// <summary>
+/// Drives an inspection: walks the NPC along a waypoint route, plays enter/leave/catch cues, and
+/// accumulates risk from any contraband spotted along the way. Cardinal-facing maths are delegated
+/// to the pure <see cref="InspectionPath"/>; risk is read/written through an injected
+/// <see cref="RiskManager"/>.
+/// </summary>
 public class InspectionSystem : MonoBehaviour
 {
-    [Header("NPC Settings")]
-    [SerializeField] private Transform npc; // NPC GameObject
-    private Npc npcScript;
-    [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private List<Transform> waypoints; // punkty trasy NPC
-    [SerializeField] private Animator inspectionAnimator;
-    [SerializeField] private Animator inspectionOfficerAnimator;
-    private AudioSource _inspectionAnimatorAudioSource;
-    [SerializeField] private List<AudioClip> inspectionSounds;
+    [Header("Dependencies")]
+    [Tooltip("Risk source this inspection reads and adds to. Required.")]
+    [SerializeField]
+    private RiskManager _riskManager;
 
-    private int currentWaypoint = 0;
-    private bool inspecting = false;
-    public bool isCatching = false;
-    private float moveX;
-    private float moveY;
+    [Header("NPC Movement")]
+    [Tooltip("Transform of the walking NPC. Required.")]
+    [FormerlySerializedAs("npc")]
+    [SerializeField]
+    private Transform _npc;
 
-    private void Start()
+    [Tooltip("NPC movement speed in world units per second.")]
+    [FormerlySerializedAs("moveSpeed")]
+    [SerializeField]
+    private float _moveSpeed = 2f;
+
+    [Tooltip("Ordered route the NPC walks during an inspection. Must have at least one point.")]
+    [FormerlySerializedAs("waypoints")]
+    [SerializeField]
+    private List<Transform> _waypoints;
+
+    [Header("Animation & Audio")]
+    [Tooltip("Animator playing the inspection enter/leave transitions. Required.")]
+    [FormerlySerializedAs("inspectionAnimator")]
+    [SerializeField]
+    private Animator _inspectionAnimator;
+
+    [Tooltip("Animator for the walking officer (MoveX/MoveY/isWalking).")]
+    [FormerlySerializedAs("inspectionOfficerAnimator")]
+    [SerializeField]
+    private Animator _inspectionOfficerAnimator;
+
+    [Tooltip("Sounds indexed as [0]=enter, [1]=leave, [2]=catch. Required (>= 3 clips).")]
+    [FormerlySerializedAs("inspectionSounds")]
+    [SerializeField]
+    private List<AudioClip> _inspectionSounds;
+
+    private Npc _npcScript;
+    private AudioSource _inspectionAudioSource;
+    private int _currentWaypoint;
+    private bool _inspecting;
+    private bool _isCatching;
+    private Vector2 _facing;
+    private Vector2 _lastPosition;
+
+    public bool IsCatching => _isCatching;
+
+    private void Awake()
     {
-        npcScript = npc.GetComponent<Npc>();
-        _inspectionAnimatorAudioSource = inspectionAnimator.GetComponent<AudioSource>();
+        Assert.IsNotNull(
+            _riskManager,
+            $"[{nameof(InspectionSystem)}] RiskManager unassigned on {name}!"
+        );
+        Assert.IsNotNull(_npc, $"[{nameof(InspectionSystem)}] NPC transform unassigned on {name}!");
+        Assert.IsNotNull(
+            _inspectionAnimator,
+            $"[{nameof(InspectionSystem)}] Inspection animator unassigned on {name}!"
+        );
+
+        _npcScript = _npc.GetComponent<Npc>();
+        Assert.IsNotNull(
+            _npcScript,
+            $"[{nameof(InspectionSystem)}] NPC transform has no Npc component on {name}!"
+        );
+        _inspectionAudioSource = _inspectionAnimator.GetComponent<AudioSource>();
     }
 
-    private void PlayInspectionSound(string sound)
+    private void OnValidate()
     {
-        switch (sound)
-        {
-            case "enter":
-                _inspectionAnimatorAudioSource.PlayOneShot(inspectionSounds[0]);
-                break;
-            case "leave":
-                _inspectionAnimatorAudioSource.PlayOneShot(inspectionSounds[1]);
-                break;
-            case "catch":
-                _inspectionAnimatorAudioSource.PlayOneShot(inspectionSounds[2]);
-                break;
-            default:
-                _inspectionAnimatorAudioSource.PlayOneShot(inspectionSounds[0]);
-                break;
-        }
+        if (_moveSpeed < 0f)
+            _moveSpeed = 0f;
     }
 
     private void Update()
     {
-        //Debug.Log("Inspecting: " + inspecting);
-        if (inspecting && !isCatching)
-        {
+        if (_inspecting && !_isCatching)
             MoveNpc();
-        }
 
-        if (inspecting || isCatching)
-        {
+        if (_inspecting || _isCatching)
             UpdateWalkingState();
-        }
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
             StartInspection();
-            Debug.Log("Inspection started!");
-        }
-    }
-    
-    private IEnumerator StartInspectionRoutine()
-    {
-        DisplayInspectionEnter();
-
-        // 1. Czekaj aż ANIMATOR faktycznie wejdzie w stan
-        yield return new WaitUntil(() =>
-            inspectionAnimator.GetCurrentAnimatorStateInfo(0).IsName("OchranaInspectionEnter")
-        );
-
-        // 2. Czekaj aż ANIMATOR opuści ten stan (co oznacza koniec animacji)
-        yield return new WaitWhile(() =>
-            inspectionAnimator.GetCurrentAnimatorStateInfo(0).IsName("OchranaInspectionEnter")
-        );
-        PlayInspectionSound("enter");
-        inspecting = true;
     }
 
     public void StartInspection()
     {
-        if (waypoints.Count == 0 || npc == null)
+        if (_waypoints.Count == 0)
         {
-            Debug.LogWarning("Waypoints or NPC not set!");
+            Debug.LogWarning($"[{nameof(InspectionSystem)}] No waypoints set on {name}.");
             return;
         }
-        
-        npc.gameObject.SetActive(true);
-        currentWaypoint = 0;
-        
+
+        _npc.gameObject.SetActive(true);
+        _currentWaypoint = 0;
         StartCoroutine(StartInspectionRoutine());
     }
 
+    /// <summary>Called from contraband triggers while the NPC is inspecting.</summary>
+    public void DetectSensitiveItem(int itemRisk)
+    {
+        _riskManager.AddRisk(itemRisk);
+        if (_isCatching)
+            return;
 
-    private Vector2 lastPosition;
+        if (_riskManager.CurrentRisk >= 90f)
+        {
+            _isCatching = true;
+            GameEvents.OchranaBribe(); // resolved by EndCatching() once the bribe is handled
+        }
+    }
+
+    /// <summary>Ends the "caught" bribe standoff — invoked by the event handler after resolution.</summary>
+    public void EndCatching() => _isCatching = false;
+
+    private IEnumerator StartInspectionRoutine()
+    {
+        DisplayInspectionEnter();
+
+        // Wait until the animator actually enters, then leaves, the enter state.
+        yield return new WaitUntil(() =>
+            _inspectionAnimator.GetCurrentAnimatorStateInfo(0).IsName("OchranaInspectionEnter")
+        );
+        yield return new WaitWhile(() =>
+            _inspectionAnimator.GetCurrentAnimatorStateInfo(0).IsName("OchranaInspectionEnter")
+        );
+
+        PlayInspectionSound(InspectionCue.Enter);
+        _inspecting = true;
+    }
 
     private void MoveNpc()
     {
-        if (RiskManager.Instance.CurrentRisk >= 99.5f)
+        if (_riskManager.CurrentRisk >= 99.5f)
         {
-            EventSystem.Arrest();
+            GameEvents.Arrest();
             return;
         }
 
-        Transform target = waypoints[currentWaypoint];
-        Vector2 rawDir = (target.position - npc.position);
-        Vector2 direction = rawDir.normalized;
+        Transform target = _waypoints[_currentWaypoint];
+        Vector2 delta = (Vector2)target.position - (Vector2)_npc.position;
+        _facing = InspectionPath.CardinalFacing(delta);
 
-        npc.position = Vector2.MoveTowards(npc.position, target.position, moveSpeed * Time.deltaTime);
+        _npc.position = Vector2.MoveTowards(
+            _npc.position,
+            target.position,
+            _moveSpeed * Time.deltaTime
+        );
 
-        // --- TWOJA ORYGINALNA LOGIKA ---
-        if (Mathf.Abs(direction.y) > Mathf.Abs(direction.x))
+        if (Vector2.Distance(_npc.position, target.position) < 0.1f)
         {
-            moveY = direction.y > 0 ? 1f : -1f;
-            moveX = 0f;
-        }
-        else
-        {
-            moveX = direction.x > 0 ? 1f : -1f;
-            moveY = 0f;
-        }
-
-        // waypoint arrival
-        if (Vector2.Distance(npc.position, target.position) < 0.1f)
-        {
-            currentWaypoint++;
-            if (currentWaypoint >= waypoints.Count)
-            {
+            _currentWaypoint++;
+            if (_currentWaypoint >= _waypoints.Count)
                 EndInspection();
-            }
         }
     }
 
-
-    
     private void UpdateWalkingState()
     {
-        // ✔️ real walking detection (działa nawet gdy MoveNpc NIE jest wywoływany)
-        bool isWalking = (Vector2.Distance(npc.position, lastPosition) > 0.0001f);
-        lastPosition = npc.position;
+        bool isWalking = Vector2.Distance(_npc.position, _lastPosition) > 0.0001f;
+        _lastPosition = _npc.position;
 
-        // --- SOUND ---
-        if (isWalking)
-        {
-            if (!npcScript.IsPlayingSound())
-                npcScript.PlaySound();
-        }
-        else
-        {
-            if (npcScript.IsPlayingSound())
-                npcScript.StopSound();
-        }
+        if (isWalking && !_npcScript.IsPlayingSound)
+            _npcScript.PlaySound();
+        else if (!isWalking && _npcScript.IsPlayingSound)
+            _npcScript.StopSound();
 
-        // --- ANIM ---
-        if (inspectionOfficerAnimator)
+        if (_inspectionOfficerAnimator)
         {
-            inspectionOfficerAnimator.SetFloat("MoveX", moveX);
-            inspectionOfficerAnimator.SetFloat("MoveY", moveY);
-            inspectionOfficerAnimator.SetBool("isWalking", isWalking);
+            _inspectionOfficerAnimator.SetFloat("MoveX", _facing.x);
+            _inspectionOfficerAnimator.SetFloat("MoveY", _facing.y);
+            _inspectionOfficerAnimator.SetBool("isWalking", isWalking);
         }
     }
-
-
-
 
     private void EndInspection()
     {
-        inspecting = false;
+        _inspecting = false;
         DisplayInspectionLeave();
 
-        if (RiskManager.Instance.CurrentRisk > 99)
-        {
-            DisplayInspectionCatch();
-        }
-        
-        npc.gameObject.SetActive(false);
+        if (_riskManager.CurrentRisk > 99f)
+            PlayInspectionSound(InspectionCue.Catch);
+
+        _npc.gameObject.SetActive(false);
     }
 
     private void DisplayInspectionEnter()
     {
-        if (inspectionAnimator)
-            inspectionAnimator.SetTrigger("Enter");
-    }
-
-    private void DisplayInspectionCatch()//Add Arrest to an event (print arrester for now but make it actaully print it)
-    {
-        PlayInspectionSound("catch");
-       // if (inspectionAnimator)
-       //     inspectionAnimator.SetTrigger("Catch");
+        if (_inspectionAnimator)
+            _inspectionAnimator.SetTrigger("Enter");
     }
 
     private void DisplayInspectionLeave()
     {
-        if (inspectionAnimator)
-            inspectionAnimator.SetTrigger("Leave");
-        PlayInspectionSound("leave");
+        if (_inspectionAnimator)
+            _inspectionAnimator.SetTrigger("Leave");
+        PlayInspectionSound(InspectionCue.Leave);
     }
 
-    // Wywoływane z NPC colliderem przy obiektach Sensitive
-    public void DetectSensitiveItem(int itemRisk)
+    private void PlayInspectionSound(InspectionCue cue)
     {
-        RiskManager.Instance.AddRisk(itemRisk);
-        if (isCatching) return;
-        if (RiskManager.Instance.CurrentRisk >= 90)
-        {
-            isCatching = true;
-            EventSystem.OchranaBribe();//set isCatching to false after event
-        }
-        Debug.Log($"Sensitive item detected!");
+        if (_inspectionAudioSource == null || _inspectionSounds == null)
+            return;
+
+        int index = (int)cue;
+        if (index >= 0 && index < _inspectionSounds.Count)
+            _inspectionAudioSource.PlayOneShot(_inspectionSounds[index]);
+    }
+
+    private enum InspectionCue
+    {
+        Enter = 0,
+        Leave = 1,
+        Catch = 2,
     }
 }

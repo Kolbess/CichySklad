@@ -1,62 +1,65 @@
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
+/// <summary>
+/// Main-menu controller: starts the game, toggles the instructions panel, plays a UI sound, and
+/// quits. All public methods are wired to menu buttons (names kept stable for UnityEvent binding).
+/// </summary>
+[RequireComponent(typeof(AudioSource))]
 public class MainMenuUiManger : MonoBehaviour
 {
-    private AudioSource _audioSource;
     [Header("Scene Configuration")]
-    [SerializeField] private string gameSceneName = "Storage";
+    [Tooltip("Scene loaded when the player starts the game.")]
+    [FormerlySerializedAs("gameSceneName")]
+    [SerializeField]
+    private string _gameSceneName = "Storage";
 
     [Header("UI Elements")]
-    [SerializeField] private GameObject instructionsPanel;
-    [SerializeField] private GameObject mainMenuButtons;
+    [Tooltip(
+        "Instructions panel, hidden at start and toggled by the instructions button. Required."
+    )]
+    [FormerlySerializedAs("instructionsPanel")]
+    [SerializeField]
+    private GameObject _instructionsPanel;
+
+    [Tooltip("Container of the main menu buttons, hidden while instructions are shown. Required.")]
+    [FormerlySerializedAs("mainMenuButtons")]
+    [SerializeField]
+    private GameObject _mainMenuButtons;
+
+    private AudioSource _audioSource;
+
+    private void Awake()
+    {
+        _audioSource = GetComponent<AudioSource>();
+        Assert.IsNotNull(
+            _instructionsPanel,
+            $"[{nameof(MainMenuUiManger)}] Instructions panel unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _mainMenuButtons,
+            $"[{nameof(MainMenuUiManger)}] Main menu buttons unassigned on {name}!"
+        );
+    }
 
     private void Start()
     {
-        _audioSource = GetComponent<AudioSource>();
-        // Ensure instructions are hidden at start
-        if (instructionsPanel != null)
-        {
-            instructionsPanel.SetActive(false);
-        }
-        if (mainMenuButtons != null)
-        {
-            mainMenuButtons.SetActive(true);
-        }
-    }
-    
-    public void PlaySound()
-    {
-        _audioSource.Play();
+        _instructionsPanel.SetActive(false);
+        _mainMenuButtons.SetActive(true);
     }
 
-    public void StartGame()
-    {
-        Debug.Log($"Loading scene: {gameSceneName}");
-        SceneManager.LoadScene(gameSceneName);
-    }
+    public void PlaySound() => _audioSource.Play();
+
+    public void StartGame() => SceneManager.LoadScene(_gameSceneName);
 
     public void ToggleInstructions()
     {
-        if (instructionsPanel != null)
-        {
-            bool isActive = instructionsPanel.activeSelf;
-            instructionsPanel.SetActive(!isActive);
-
-            if (mainMenuButtons != null)
-            {
-                mainMenuButtons.SetActive(isActive); // If instructions are active, buttons should be inactive, and vice versa
-            }
-        }
-        else
-        {
-            Debug.LogWarning("Instructions Panel is not assigned in the Inspector!");
-        }
+        bool showInstructions = !_instructionsPanel.activeSelf;
+        _instructionsPanel.SetActive(showInstructions);
+        _mainMenuButtons.SetActive(!showInstructions);
     }
 
-    public void QuitGame()
-    {
-        Debug.Log("Quitting Game...");
-        Application.Quit();
-    }
+    public void QuitGame() => Application.Quit();
 }

@@ -1,91 +1,125 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Assertions;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 
+/// <summary>
+/// A clickable printing station: spends ink and paper to produce a leaflet, then enters a
+/// cooldown visualised on a slider. Hovering/dragging shows the cost. Talks to an injected
+/// <see cref="ResourceManager"/>.
+/// </summary>
 public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDragHandler
 {
+    [Header("Dependencies")]
+    [Tooltip("Resource source that pays for and receives printed leaflets. Required.")]
+    [SerializeField]
+    private ResourceManager _resourceManager;
+
     [Header("UI Elements")]
-    public Slider cooldownSlider;
-    public TextMeshProUGUI costText;
+    [Tooltip("Slider filled over the cooldown after a successful print. Required.")]
+    [FormerlySerializedAs("cooldownSlider")]
+    [SerializeField]
+    private Slider _cooldownSlider;
+
+    [Tooltip("Text showing the ink/paper cost on hover and drag. Required.")]
+    [FormerlySerializedAs("costText")]
+    [SerializeField]
+    private TextMeshProUGUI _costText;
 
     [Header("Settings")]
-    public float cooldownDuration = 5f;
-    public int costInk = 1;
-    public int costPaper = 2;
+    [Tooltip("Seconds of cooldown after a print before another is allowed. Must be > 0.")]
+    [FormerlySerializedAs("cooldownDuration")]
+    [SerializeField]
+    private float _cooldownDuration = 5f;
 
-    private float cooldownTimer = 0f;
-    private bool onCooldown = false;
+    [Tooltip("Ink consumed per printed leaflet.")]
+    [FormerlySerializedAs("costInk")]
+    [SerializeField]
+    private int _costInk = 1;
+
+    [Tooltip("Paper consumed per printed leaflet.")]
+    [FormerlySerializedAs("costPaper")]
+    [SerializeField]
+    private int _costPaper = 2;
+
+    private float _cooldownTimer;
+    private bool _onCooldown;
+
+    private void OnValidate()
+    {
+        if (_cooldownDuration <= 0f)
+            _cooldownDuration = 0.01f;
+        if (_costInk < 0)
+            _costInk = 0;
+        if (_costPaper < 0)
+            _costPaper = 0;
+    }
+
+    private void Awake()
+    {
+        Assert.IsNotNull(
+            _resourceManager,
+            $"[{nameof(PrintLeaflet)}] ResourceManager unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _cooldownSlider,
+            $"[{nameof(PrintLeaflet)}] Cooldown slider unassigned on {name}!"
+        );
+        Assert.IsNotNull(_costText, $"[{nameof(PrintLeaflet)}] Cost text unassigned on {name}!");
+    }
 
     private void Start()
     {
-        if (cooldownSlider != null)
-        {
-            cooldownSlider.maxValue = cooldownDuration;
-            cooldownSlider.value = 0f;
-        }
-
-        if (costText != null)
-            costText.gameObject.SetActive(false);
+        _cooldownSlider.maxValue = _cooldownDuration;
+        _cooldownSlider.value = 0f;
+        _costText.gameObject.SetActive(false);
     }
 
     private void Update()
     {
-        if (onCooldown)
-        {
-            cooldownTimer -= Time.deltaTime;
-            cooldownSlider.value = cooldownDuration - cooldownTimer;
+        if (!_onCooldown)
+            return;
 
-            if (cooldownTimer <= 0f)
-            {
-                cooldownTimer = 0f;
-                onCooldown = false;
-            }
+        _cooldownTimer -= Time.deltaTime;
+        _cooldownSlider.value = _cooldownDuration - _cooldownTimer;
+
+        if (_cooldownTimer <= 0f)
+        {
+            _cooldownTimer = 0f;
+            _onCooldown = false;
         }
     }
 
     private void OnMouseDown()
     {
-        if (onCooldown) return; // still cooling down
+        if (_onCooldown)
+            return;
 
-        if (ResourceManager.Instance.TrySpend(costInk, costPaper))
+        if (_resourceManager.TrySpend(costPaper: _costPaper, costInk: _costInk))
         {
-            ResourceManager.Instance.leaflets += 1;
+            _resourceManager.AddLeaflets(1);
             StartCooldown();
         }
     }
 
     private void StartCooldown()
     {
-        onCooldown = true;
-        cooldownTimer = cooldownDuration;
-        if (cooldownSlider != null)
-            cooldownSlider.value = 0f;
+        _onCooldown = true;
+        _cooldownTimer = _cooldownDuration;
+        _cooldownSlider.value = 0f;
     }
 
-    // Hover / Drag UI events
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (costText != null)
-        {
-            costText.text = $"Ink: {costInk}, Paper: {costPaper}";
-            costText.gameObject.SetActive(true);
-        }
-    }
+    public void OnPointerEnter(PointerEventData eventData) => ShowCost();
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        if (costText != null)
-            costText.gameObject.SetActive(false);
-    }
+    public void OnPointerExit(PointerEventData eventData) => _costText.gameObject.SetActive(false);
 
-    public void OnDrag(PointerEventData eventData)
+    public void OnDrag(PointerEventData eventData) => ShowCost();
+
+    private void ShowCost()
     {
-        // Show cost while dragging as well
-        if (costText != null)
-        {
-            costText.text = $"Ink: {costInk}, Paper: {costPaper}";
-            costText.gameObject.SetActive(true);
-        }
+        _costText.text = $"Ink: {_costInk}, Paper: {_costPaper}";
+        _costText.gameObject.SetActive(true);
     }
 }

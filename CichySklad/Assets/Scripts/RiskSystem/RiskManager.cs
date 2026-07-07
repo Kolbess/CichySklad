@@ -1,123 +1,140 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
+/// <summary>
+/// Owns the runtime risk value and its automatic per-frame decay. A plain scene component
+/// (no singleton): systems that need it hold a <c>[SerializeField]</c> reference. All banding
+/// and decay maths are delegated to the pure, tested <see cref="RiskCalculator"/>.
+/// </summary>
 public class RiskManager : MonoBehaviour
 {
-    public static RiskManager Instance { get; private set; }
-
-    [Header("Risk Settings")]
+    [Header("Risk State")]
     [Range(0, 100)]
-    [SerializeField] private float currentRisk = 0f;
-    [SerializeField] private float maxRisk = 100f;
-    
-    [Header("Thresholds")]
-    [SerializeField] private float mediumRiskThreshold = 30f;
-    [SerializeField] private float highRiskThreshold = 70f;
-    [SerializeField] private float criticalRiskThreshold = 90f;
+    [Tooltip("Current accumulated risk, 0 = safe. Clamped to [0, Max Risk] at runtime.")]
+    [FormerlySerializedAs("currentRisk")]
+    [SerializeField]
+    private float _currentRisk = 0f;
+
+    [Tooltip("Upper bound for risk. Must be greater than 0.")]
+    [FormerlySerializedAs("maxRisk")]
+    [SerializeField]
+    private float _maxRisk = 100f;
+
+    [Header("Band Thresholds (inclusive lower bounds)")]
+    [Tooltip("Risk at or above this enters the Medium band.")]
+    [FormerlySerializedAs("mediumRiskThreshold")]
+    [SerializeField]
+    private float _mediumRiskThreshold = 30f;
+
+    [Tooltip("Risk at or above this enters the High band.")]
+    [FormerlySerializedAs("highRiskThreshold")]
+    [SerializeField]
+    private float _highRiskThreshold = 70f;
+
+    [Tooltip("Risk at or above this enters the Critical band.")]
+    [FormerlySerializedAs("criticalRiskThreshold")]
+    [SerializeField]
+    private float _criticalRiskThreshold = 90f;
 
     [Header("Decay")]
-    [SerializeField] private float riskDecayRate = 1f; // Risk reduced per second automatically
-    
-    [Header("Decay Multipliers")]
-    [SerializeField] private float lowRiskDecayMultiplier = 1.0f;
-    [SerializeField] private float mediumRiskDecayMultiplier = 0.75f;
-    [SerializeField] private float highRiskDecayMultiplier = 0.5f;
-    [SerializeField] private float criticalRiskDecayMultiplier = 0.25f;
+    [Tooltip("Base risk removed per second before the band multiplier is applied.")]
+    [FormerlySerializedAs("riskDecayRate")]
+    [SerializeField]
+    private float _riskDecayRate = 1f;
 
-    public event Action<float> OnRiskChanged;
-    public event Action<RiskLevel> OnRiskLevelChanged;
+    [Space]
+    [Tooltip("Decay multiplier while in the Low band (1 = full base rate).")]
+    [FormerlySerializedAs("lowRiskDecayMultiplier")]
+    [SerializeField]
+    private float _lowRiskDecayMultiplier = 1.0f;
 
-    public float CurrentRisk => currentRisk;
-    public float MaxRisk => maxRisk;
+    [Tooltip("Decay multiplier while in the Medium band.")]
+    [FormerlySerializedAs("mediumRiskDecayMultiplier")]
+    [SerializeField]
+    private float _mediumRiskDecayMultiplier = 0.75f;
+
+    [Tooltip("Decay multiplier while in the High band.")]
+    [FormerlySerializedAs("highRiskDecayMultiplier")]
+    [SerializeField]
+    private float _highRiskDecayMultiplier = 0.5f;
+
+    [Tooltip("Decay multiplier while in the Critical band (risk sticks longest here).")]
+    [FormerlySerializedAs("criticalRiskDecayMultiplier")]
+    [SerializeField]
+    private float _criticalRiskDecayMultiplier = 0.25f;
 
     private RiskLevel _currentRiskLevel = RiskLevel.Low;
 
-    private void Awake()
+    /// <summary>Raised whenever the numeric risk value changes.</summary>
+    public event Action<float> OnRiskChanged;
+
+    /// <summary>Raised only when the risk crosses into a different <see cref="RiskLevel"/> band.</summary>
+    public event Action<RiskLevel> OnRiskLevelChanged;
+
+    public float CurrentRisk => _currentRisk;
+    public float MaxRisk => _maxRisk;
+    public RiskLevel CurrentRiskLevel => _currentRiskLevel;
+
+    private void OnEnable() => GameEvents.OnRiskDelta += AddRisk;
+
+    private void OnDisable() => GameEvents.OnRiskDelta -= AddRisk;
+
+    private void OnValidate()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (_maxRisk <= 0f)
+            _maxRisk = 1f;
+
+        _currentRisk = Mathf.Clamp(_currentRisk, 0f, _maxRisk);
+
+        // Keep thresholds monotonically ordered so banding stays sane as the designer edits.
+        _mediumRiskThreshold = Mathf.Clamp(_mediumRiskThreshold, 0f, _maxRisk);
+        _highRiskThreshold = Mathf.Clamp(_highRiskThreshold, _mediumRiskThreshold, _maxRisk);
+        _criticalRiskThreshold = Mathf.Clamp(_criticalRiskThreshold, _highRiskThreshold, _maxRisk);
+
+        if (_riskDecayRate < 0f)
+            _riskDecayRate = 0f;
     }
 
     private void Update()
     {
-        // Decay risk over time with progressive multiplier
-        if (currentRisk > 0)
-        {
-            float multiplier = GetDecayMultiplier();
-            ReduceRisk(riskDecayRate * multiplier * Time.deltaTime);
-        }
+        if (_currentRisk <= 0f)
+            return;
+
+        float multiplier = RiskCalculator.DecayMultiplier(
+            _currentRiskLevel,
+            _lowRiskDecayMultiplier,
+            _mediumRiskDecayMultiplier,
+            _highRiskDecayMultiplier,
+            _criticalRiskDecayMultiplier
+        );
+        ReduceRisk(_riskDecayRate * multiplier * Time.deltaTime);
     }
 
-    private float GetDecayMultiplier()
-    {
-        switch (_currentRiskLevel)
-        {
-            case RiskLevel.Low:
-                return lowRiskDecayMultiplier;
-            case RiskLevel.Medium:
-                return mediumRiskDecayMultiplier;
-            case RiskLevel.High:
-                return highRiskDecayMultiplier;
-            case RiskLevel.Critical:
-                return criticalRiskDecayMultiplier;
-            default:
-                return 1.0f;
-        }
-    }
+    public void AddRisk(float amount) => SetRisk(_currentRisk + amount);
 
-    public void AddRisk(float amount)
-    {
-        currentRisk = Mathf.Clamp(currentRisk + amount, 0, maxRisk);
-        OnRiskChanged?.Invoke(currentRisk);
-        CheckRiskLevel();
-    }
+    public void ReduceRisk(float amount) => SetRisk(_currentRisk - amount);
 
     public void SetRisk(float amount)
     {
-        currentRisk = Mathf.Clamp(amount, 0, maxRisk);
-        OnRiskChanged?.Invoke(currentRisk);
-        CheckRiskLevel();
-    }
-
-    public void ReduceRisk(float amount)
-    {
-        currentRisk = Mathf.Clamp(currentRisk - amount, 0, maxRisk);
-        OnRiskChanged?.Invoke(currentRisk);
+        _currentRisk = Mathf.Clamp(amount, 0f, _maxRisk);
+        OnRiskChanged?.Invoke(_currentRisk);
         CheckRiskLevel();
     }
 
     private void CheckRiskLevel()
     {
-        RiskLevel newLevel;
+        RiskLevel newLevel = RiskCalculator.DetermineLevel(
+            _currentRisk,
+            _mediumRiskThreshold,
+            _highRiskThreshold,
+            _criticalRiskThreshold
+        );
 
-        if (currentRisk >= criticalRiskThreshold)
-        {
-            newLevel = RiskLevel.Critical;
-        }
-        else if (currentRisk >= highRiskThreshold)
-        {
-            newLevel = RiskLevel.High;
-        }
-        else if (currentRisk >= mediumRiskThreshold)
-        {
-            newLevel = RiskLevel.Medium;
-        }
-        else
-        {
-            newLevel = RiskLevel.Low;
-        }
+        if (newLevel == _currentRiskLevel)
+            return;
 
-        if (newLevel != _currentRiskLevel)
-        {
-            _currentRiskLevel = newLevel;
-            OnRiskLevelChanged?.Invoke(_currentRiskLevel);
-            Debug.Log($"Risk Level Changed to: {_currentRiskLevel}");
-        }
+        _currentRiskLevel = newLevel;
+        OnRiskLevelChanged?.Invoke(_currentRiskLevel);
     }
 }
