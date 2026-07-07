@@ -10,7 +10,9 @@ using Random = UnityEngine.Random;
 /// <summary>
 /// Drives the in-game day: advances a timer through six time-of-day sprites, fires a random
 /// narrative event and a random resource windfall each day, and shows a day-transition screen.
-/// A run is won on day 7 with full trust. Talks to injected risk/resource/dialogue systems.
+/// A run is won by surviving to the target day with at least the target trust (see
+/// <see cref="WinCondition"/>); it is lost when <see cref="GameEvents.OnArrest"/> fires. Either
+/// outcome freezes the day loop. Talks to injected risk/resource/dialogue systems.
 /// </summary>
 public class DayCycle : MonoBehaviour
 {
@@ -57,9 +59,16 @@ public class DayCycle : MonoBehaviour
     private TextMeshProUGUI _dayText;
 
     [Header("Win Condition")]
-    [Tooltip("Day number on which full trust wins the run.")]
+    [Tooltip("Earliest day (inclusive) on which the run can be won. Must be >= 1.")]
     [SerializeField]
     private int _winDay = 7;
+
+    [Tooltip(
+        "Minimum trust (inclusive) required to win on/after the win day. 0..100. "
+            + "Uses a >= threshold, never an exact match."
+    )]
+    [SerializeField]
+    private int _winTrustThreshold = 50;
 
     [Tooltip("Scene loaded when the run is won.")]
     [SerializeField]
@@ -73,11 +82,17 @@ public class DayCycle : MonoBehaviour
     private bool _dayDisplay;
     private bool _eventA;
     private bool _eventB;
+    private bool _gameOver;
+
+    public bool IsGameOver => _gameOver;
 
     private void OnValidate()
     {
         if (_dayDuration <= 0f)
             _dayDuration = 1f;
+        if (_winDay < 1)
+            _winDay = 1;
+        _winTrustThreshold = Mathf.Clamp(_winTrustThreshold, 0, 100);
     }
 
     private void Awake()
@@ -101,8 +116,16 @@ public class DayCycle : MonoBehaviour
         _timer = _dayDuration;
     }
 
+    private void OnEnable() => GameEvents.OnArrest += HandleArrest;
+
+    private void OnDisable() => GameEvents.OnArrest -= HandleArrest;
+
     private void Update()
     {
+        // Once the run has ended (won or arrested) the day loop must not keep counting.
+        if (_gameOver)
+            return;
+
         _timer += Time.deltaTime;
 
         if (_dayDisplay && _timer > 3f)
@@ -158,12 +181,29 @@ public class DayCycle : MonoBehaviour
 
     private void EndDay()
     {
-        if (_currentDay == _winDay && _resourceManager.Trust == 100)
-            SceneManager.LoadScene(_endGameSceneName);
+        if (WinCondition.IsMet(_currentDay, _winDay, _resourceManager.Trust, _winTrustThreshold))
+        {
+            WinRun();
+            return;
+        }
 
         _lastDayRisk = _riskManager.CurrentRisk;
         _riskManager.SetRisk(0);
         StartDay();
+    }
+
+    private void WinRun()
+    {
+        // Freeze the loop before loading so no further day advances this frame.
+        _gameOver = true;
+        SceneManager.LoadScene(_endGameSceneName);
+    }
+
+    private void HandleArrest()
+    {
+        // Loss is presented by DeathManager (listens to the same event); here we only stop the
+        // day loop so days do not keep advancing behind the death screen.
+        _gameOver = true;
     }
 
     private void GetRandomEvent()
