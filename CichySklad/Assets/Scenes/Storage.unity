@@ -413,6 +413,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -476,6 +477,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &103073042
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -494,6 +496,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -515,9 +519,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -527,7 +533,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &103073043
 Transform:
@@ -603,15 +608,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7fc8998bc41b9241b045f92cb1c49fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxCapacity: 5
-  capacityUI: {fileID: 372057150}
-  capacityText: {fileID: 1620407364}
-  risk: 0
-  riskImage: {fileID: 372057152}
-  contentUI: {fileID: 1402850698}
-  _objects: []
-  openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
-  closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
+  _maxCapacity: 5
+  _capacityUI: {fileID: 372057150}
+  _capacityText: {fileID: 1620407364}
+  _contentUI: {fileID: 1402850698}
+  _openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
+  _closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
 --- !u!82 &103073046
 AudioSource:
   m_ObjectHideFlags: 0
@@ -622,7 +624,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -842,7 +844,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -987,17 +989,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7fc8998bc41b9241b045f92cb1c49fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxCapacity: 5
-  capacityUI: {fileID: 1250893373}
-  capacityText: {fileID: 809032801}
-  risk: 0
-  riskImage: {fileID: 1250893375}
-  contentUI: {fileID: 322892766}
-  _objects: []
-  openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
-  closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
+  _maxCapacity: 5
+  _capacityUI: {fileID: 1250893373}
+  _capacityText: {fileID: 809032801}
+  _contentUI: {fileID: 322892766}
+  _openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
+  _closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
 --- !u!212 &171627241
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1016,6 +1016,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1037,9 +1039,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -1049,7 +1053,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &171627242
 Transform:
@@ -1299,6 +1302,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1506,6 +1510,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1954,7 +1959,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -2099,17 +2104,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7fc8998bc41b9241b045f92cb1c49fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxCapacity: 5
-  capacityUI: {fileID: 1192311760}
-  capacityText: {fileID: 1416029845}
-  risk: 0
-  riskImage: {fileID: 1192311762}
-  contentUI: {fileID: 1646513629}
-  _objects: []
-  openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
-  closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
+  _maxCapacity: 5
+  _capacityUI: {fileID: 1192311760}
+  _capacityText: {fileID: 1416029845}
+  _contentUI: {fileID: 1646513629}
+  _openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
+  _closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
 --- !u!212 &394371717
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2128,6 +2131,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -2149,9 +2154,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -2161,7 +2168,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &394371718
 Transform:
@@ -2309,6 +2315,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2445,6 +2452,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2505,6 +2513,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &448091251
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2523,6 +2532,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -2544,9 +2555,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: -1
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.3773585, g: 0.3773585, b: 0.3773585, a: 1}
   m_FlipX: 0
@@ -2556,7 +2569,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &448091252
 Transform:
@@ -2895,7 +2907,6 @@ MonoBehaviour:
   m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
-  m_Version: 2
   m_TaaSettings:
     m_Quality: 3
     m_FrameInfluence: 0.1
@@ -2903,6 +2914,7 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &607722855
 GameObject:
   m_ObjectHideFlags: 0
@@ -3603,6 +3615,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3928,6 +3941,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -4107,7 +4121,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -4252,17 +4266,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7fc8998bc41b9241b045f92cb1c49fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxCapacity: 5
-  capacityUI: {fileID: 766901954}
-  capacityText: {fileID: 1062548541}
-  risk: 0
-  riskImage: {fileID: 766901956}
-  contentUI: {fileID: 491094540}
-  _objects: []
-  openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
-  closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
+  _maxCapacity: 5
+  _capacityUI: {fileID: 766901954}
+  _capacityText: {fileID: 1062548541}
+  _contentUI: {fileID: 491094540}
+  _openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
+  _closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
 --- !u!212 &868071342
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -4281,6 +4293,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -4302,9 +4316,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -4314,7 +4330,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &868071343
 Transform:
@@ -4417,6 +4432,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &907597101
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -4435,6 +4451,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -4456,9 +4474,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: -1
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.3773585, g: 0.3773585, b: 0.3773585, a: 1}
   m_FlipX: 0
@@ -4468,7 +4488,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &907597102
 Transform:
@@ -4885,6 +4904,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -5037,22 +5057,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 134437b72ae7c774bacff87656405dd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  noPaperWarning: {fileID: 747389404}
-  noInkWarning: {fileID: 1492504752}
-  noLeafletsWarning: {fileID: 1463508865}
-  noMoneyWarning: {fileID: 789766711}
-  paperPrefab: {fileID: 7596242861837396058, guid: 925bed6c93d96d441be32154e96195a9, type: 3}
-  inkPrefab: {fileID: 5466314729516668636, guid: a78d1ac9e51a5744883276223abecd2c, type: 3}
-  leafletsPrefab: {fileID: 6587648212951182120, guid: bd62383224b502d4493a21d25c841369, type: 3}
-  moneyPrefab: {fileID: 7535504520218745270, guid: 7424607cfc8210a4daa6e8d292d9cf5f, type: 3}
-  resourceSpawnPoint: {fileID: 92408580}
-  packagePrefab: {fileID: 0}
-  itemsPerPackage: 3
-  paperText: {fileID: 1230030114}
-  inkText: {fileID: 1596591294}
-  leafletsText: {fileID: 969219027}
-  moneyText: {fileID: 213873342}
-  trustSlider: {fileID: 1311666503}
+  _paperText: {fileID: 1230030114}
+  _inkText: {fileID: 1596591294}
+  _leafletsText: {fileID: 969219027}
+  _moneyText: {fileID: 213873342}
+  _trustSlider: {fileID: 1311666503}
+  _noPaperWarning: {fileID: 747389404}
+  _noInkWarning: {fileID: 1492504752}
+  _noLeafletsWarning: {fileID: 1463508865}
+  _noMoneyWarning: {fileID: 789766711}
+  _paperPrefab: {fileID: 7596242861837396058, guid: 925bed6c93d96d441be32154e96195a9, type: 3}
+  _inkPrefab: {fileID: 5466314729516668636, guid: a78d1ac9e51a5744883276223abecd2c, type: 3}
+  _leafletsPrefab: {fileID: 6587648212951182120, guid: bd62383224b502d4493a21d25c841369, type: 3}
+  _moneyPrefab: {fileID: 7535504520218745270, guid: 7424607cfc8210a4daa6e8d292d9cf5f, type: 3}
+  _packagePrefab: {fileID: 5000579175728514454, guid: 0c20b5650576bc9459390b0e5b399dcb, type: 3}
+  _resourceSpawnPoint: {fileID: 92408580}
+  _itemsPerPackage: 3
+  _startingPaper: 2
+  _startingInk: 2
+  _startingMoney: 5
 --- !u!4 &982438192
 Transform:
   m_ObjectHideFlags: 0
@@ -5080,16 +5103,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83315d2b339737d4f82b9d1e9183bac4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueBox: {fileID: 2059158988}
-  dialogueText: {fileID: 440050054}
-  dialogueImage: {fileID: 1723865962}
-  defaultPortrait: {fileID: 21300000, guid: bed90802957fffd46bbff195100f9489, type: 3}
-  choiceButtonPrefab: {fileID: 2817427894467644365, guid: 67abbc14593757740bc5f570219e0564, type: 3}
-  choicesContainer: {fileID: 2035079684}
-  ochranaSprite: {fileID: 21300000, guid: 5d943f6667fa6ae47841d0953293a6ba, type: 3}
-  mariaSprite: {fileID: 21300000, guid: 822a67ccbbe492f4fb37a6e6b5424b26, type: 3}
-  kowalSprite: {fileID: 21300000, guid: cfe2a7bf84945024f91dfecdf1253e37, type: 3}
-  neighbourSprite: {fileID: 21300000, guid: f9c5f5c0d9999884e8a46bdcc85d1e63, type: 3}
+  _dialogueBox: {fileID: 2059158988}
+  _dialogueText: {fileID: 440050054}
+  _dialogueImage: {fileID: 1723865962}
+  _choiceButtonPrefab: {fileID: 2817427894467644365, guid: 67abbc14593757740bc5f570219e0564, type: 3}
+  _choicesContainer: {fileID: 2035079684}
+  _autoHideSeconds: 4
+  _defaultPortrait: {fileID: 21300000, guid: bed90802957fffd46bbff195100f9489, type: 3}
+  _ochranaSprite: {fileID: 21300000, guid: 5d943f6667fa6ae47841d0953293a6ba, type: 3}
+  _mariaSprite: {fileID: 21300000, guid: 822a67ccbbe492f4fb37a6e6b5424b26, type: 3}
+  _kowalSprite: {fileID: 21300000, guid: cfe2a7bf84945024f91dfecdf1253e37, type: 3}
+  _neighbourSprite: {fileID: 21300000, guid: f9c5f5c0d9999884e8a46bdcc85d1e63, type: 3}
 --- !u!114 &982438194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5102,8 +5126,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8490d762d3f0ba34b80324c12301c652, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueSystem: {fileID: 982438193}
-  inspectionSystem: {fileID: 982438197}
+  _dialogueSystem: {fileID: 982438193}
+  _inspectionSystem: {fileID: 982438197}
+  _riskManager: {fileID: 982438196}
+  _resourceManager: {fileID: 982438191}
 --- !u!114 &982438195
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5128,16 +5154,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9e4af6a56e4dd9428914ed1a82cff97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentRisk: 0
-  maxRisk: 100
-  mediumRiskThreshold: 30
-  highRiskThreshold: 70
-  criticalRiskThreshold: 90
-  riskDecayRate: 5
-  lowRiskDecayMultiplier: 1
-  mediumRiskDecayMultiplier: 0.75
-  highRiskDecayMultiplier: 0.5
-  criticalRiskDecayMultiplier: 0.25
+  _currentRisk: 0
+  _maxRisk: 100
+  _mediumRiskThreshold: 30
+  _highRiskThreshold: 70
+  _criticalRiskThreshold: 90
+  _riskDecayRate: 5
+  _lowRiskDecayMultiplier: 1
+  _mediumRiskDecayMultiplier: 0.75
+  _highRiskDecayMultiplier: 0.5
+  _criticalRiskDecayMultiplier: 0.25
 --- !u!114 &982438197
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5150,21 +5176,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 308636f438fe4f649948012575016e57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  npc: {fileID: 8498128928599258916}
-  moveSpeed: 2
-  waypoints:
+  _riskManager: {fileID: 982438196}
+  _npc: {fileID: 8498128928599258916}
+  _moveSpeed: 2
+  _waypoints:
   - {fileID: 707916236}
   - {fileID: 1644097665}
   - {fileID: 1275330765}
   - {fileID: 213282042}
   - {fileID: 873455998}
-  inspectionAnimator: {fileID: 1057441453}
-  inspectionOfficerAnimator: {fileID: 8498128928599258915}
-  inspectionSounds:
+  _inspectionAnimator: {fileID: 1057441453}
+  _inspectionOfficerAnimator: {fileID: 8498128928599258915}
+  _inspectionSounds:
   - {fileID: 8300000, guid: b78deded01758734c8db44c5b8dbe40d, type: 3}
   - {fileID: 8300000, guid: b78deded01758734c8db44c5b8dbe40d, type: 3}
   - {fileID: 8300000, guid: b78deded01758734c8db44c5b8dbe40d, type: 3}
-  isCatching: 0
 --- !u!114 &982438198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5177,7 +5203,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92a3a577cf00462478c603f5021efa55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathScreen: {fileID: 607722855}
+  _menuSceneName: MainMenu
+  _gameSceneName: Storage
+  _deathScreen: {fileID: 607722855}
 --- !u!114 &982438199
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5190,17 +5218,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3066f2be0f822a46843e5c9c432a9f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  daySprites:
+  _riskManager: {fileID: 982438196}
+  _resourceManager: {fileID: 982438191}
+  _dialogueSystem: {fileID: 982438193}
+  _dayDuration: 30
+  _daySprites:
   - {fileID: 5104677172394890368, guid: b9af4aa8551491644aa67201abf32935, type: 3}
   - {fileID: -4663780142773140147, guid: b9af4aa8551491644aa67201abf32935, type: 3}
   - {fileID: 1987090121973398385, guid: b9af4aa8551491644aa67201abf32935, type: 3}
   - {fileID: -153480006, guid: b9af4aa8551491644aa67201abf32935, type: 3}
   - {fileID: 2031463687, guid: b9af4aa8551491644aa67201abf32935, type: 3}
   - {fileID: -1588299829, guid: b9af4aa8551491644aa67201abf32935, type: 3}
-  _spriteRenderer: {fileID: 1256168059}
-  dialogueSystem: {fileID: 982438193}
-  dayScreen: {fileID: 965589486}
-  dayText: {fileID: 300097639}
+  _dayImage: {fileID: 1256168059}
+  _dayScreen: {fileID: 965589486}
+  _dayText: {fileID: 300097639}
+  _winDay: 7
+  _endGameSceneName: EndGame
 --- !u!1 &990669771
 GameObject:
   m_ObjectHideFlags: 0
@@ -5576,6 +5609,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &1026963587
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -5594,6 +5628,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -5615,9 +5651,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 7e5a1e9bed8183e41b455d5ac6e243f0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -5627,7 +5665,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &1026963588
 Transform:
@@ -5743,6 +5780,7 @@ Animator:
   m_WriteDefaultValuesOnDisable: 0
 --- !u!212 &1057441454
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -5761,6 +5799,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -5782,9 +5822,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 3
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -5794,7 +5836,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &1057441455
 Transform:
@@ -6046,6 +6087,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -6435,6 +6477,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -6606,6 +6649,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -7098,7 +7142,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -7243,17 +7287,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7fc8998bc41b9241b045f92cb1c49fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxCapacity: 5
-  capacityUI: {fileID: 382394729}
-  capacityText: {fileID: 1972166611}
-  risk: 0
-  riskImage: {fileID: 382394731}
-  contentUI: {fileID: 1925911759}
-  _objects: []
-  openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
-  closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
+  _maxCapacity: 5
+  _capacityUI: {fileID: 382394729}
+  _capacityText: {fileID: 1972166611}
+  _contentUI: {fileID: 1925911759}
+  _openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
+  _closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
 --- !u!212 &1369502631
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -7272,6 +7314,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -7293,9 +7337,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -7305,7 +7351,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &1369502632
 Transform:
@@ -7506,6 +7551,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8148,13 +8194,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 891ed9c98f531b24b89e6e76d3763e52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  riskSlider: {fileID: 1594706214}
-  fillImage: {fileID: 1082349277}
-  alertObject: {fileID: 1636889738}
-  lowRiskColor: {r: 0, g: 1, b: 0, a: 1}
-  mediumRiskColor: {r: 1, g: 0.5, b: 0, a: 1}
-  highRiskColor: {r: 1, g: 0, b: 0, a: 1}
-  criticalRiskColor: {r: 0.5, g: 0, b: 0, a: 1}
+  _riskManager: {fileID: 982438196}
+  _riskSlider: {fileID: 1594706214}
+  _fillImage: {fileID: 1082349277}
+  _alertObject: {fileID: 1636889738}
+  _lowRiskColor: {r: 0, g: 1, b: 0, a: 1}
+  _mediumRiskColor: {r: 1, g: 0.5, b: 0, a: 1}
+  _highRiskColor: {r: 1, g: 0, b: 0, a: 1}
+  _criticalRiskColor: {r: 0.5, g: 0, b: 0, a: 1}
 --- !u!114 &1594706214
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8301,6 +8348,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8437,6 +8485,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8931,6 +8980,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &1789542027
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -8949,6 +8999,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -8970,9 +9022,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: -1
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.3773585, g: 0.3773585, b: 0.3773585, a: 1}
   m_FlipX: 0
@@ -8982,7 +9036,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &1789542028
 Transform:
@@ -9102,6 +9155,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -9259,6 +9313,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &1862686668
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -9277,6 +9332,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -9298,9 +9355,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: -1
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.3773585, g: 0.3773585, b: 0.3773585, a: 1}
   m_FlipX: 0
@@ -9310,7 +9369,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &1862686669
 Transform:
@@ -9521,6 +9579,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &1907992965
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -9539,6 +9598,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -9560,9 +9621,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 0af6f76aa3613cd45a77c29ce188bdd0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -9572,7 +9635,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &1907992966
 Transform:
@@ -9602,11 +9664,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79f88f1c18026e141b87312ac9781408, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cooldownSlider: {fileID: 862673167}
-  costText: {fileID: 0}
-  cooldownDuration: 5
-  costInk: 1
-  costPaper: 2
+  _resourceManager: {fileID: 982438191}
+  _cooldownSlider: {fileID: 862673167}
+  _costText: {fileID: 844729214}
+  _cooldownDuration: 5
+  _costInk: 1
+  _costPaper: 2
 --- !u!61 &1907992968
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10128,6 +10191,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -10329,7 +10393,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 1cd674bcfd146b54a82e0c6b3d57d448, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -10474,17 +10538,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7fc8998bc41b9241b045f92cb1c49fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxCapacity: 5
-  capacityUI: {fileID: 2073586097}
-  capacityText: {fileID: 1802359311}
-  risk: 0
-  riskImage: {fileID: 2073586099}
-  contentUI: {fileID: 990669771}
-  _objects: []
-  openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
-  closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
+  _maxCapacity: 5
+  _capacityUI: {fileID: 2073586097}
+  _capacityText: {fileID: 1802359311}
+  _contentUI: {fileID: 990669771}
+  _openSprite: {fileID: 21300000, guid: ad66914575aeab94595e1cff251de3b8, type: 3}
+  _closedSprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
 --- !u!212 &2019956719
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -10503,6 +10565,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -10524,9 +10588,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d51c68d86b54fad4f865380b241205c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -10536,7 +10602,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &2019956720
 Transform:
@@ -11212,6 +11277,10 @@ PrefabInstance:
       propertyPath: inspectionSystem
       value: 
       objectReference: {fileID: 982438197}
+    - target: {fileID: 8674875842994430218, guid: 4afd6060c476ce240bacb7f86aa6e476, type: 3}
+      propertyPath: _inspectionSystem
+      value: 
+      objectReference: {fileID: 982438197}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11240,7 +11309,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 81bf6124a629bdc439283e1375b355ad, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 81bf6124a629bdc439283e1375b355ad, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
