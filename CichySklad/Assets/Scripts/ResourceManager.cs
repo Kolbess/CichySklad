@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -182,16 +181,6 @@ public class ResourceManager : MonoBehaviour
         _ledger.Money += _startingMoney;
         RefreshAllText();
         UpdateTrust();
-    }
-
-    private void Update()
-    {
-        // Debug/testing hotkeys retained from the original build.
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-            GameEvents.RumorsSpread();
-
-        if (Input.GetKeyDown(KeyCode.Z))
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void AddPaper(int amount) => _ledger.Paper += amount;

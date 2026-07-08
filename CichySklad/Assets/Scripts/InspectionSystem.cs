@@ -92,9 +92,6 @@ public class InspectionSystem : MonoBehaviour
 
         if (_inspecting || _isCatching)
             UpdateWalkingState();
-
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-            StartInspection();
     }
 
     public void StartInspection()
