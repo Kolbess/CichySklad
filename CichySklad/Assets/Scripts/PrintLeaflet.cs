@@ -119,7 +119,7 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     private void ShowCost()
     {
-        _costText.text = $"Ink: {_costInk}, Paper: {_costPaper}";
+        _costText.text = $"Tusz: {_costInk}, Papier: {_costPaper}";
         _costText.gameObject.SetActive(true);
     }
 }

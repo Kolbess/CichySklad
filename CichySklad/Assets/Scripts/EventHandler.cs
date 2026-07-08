@@ -202,7 +202,7 @@ public class EventHandler : MonoBehaviour
 
     private void HandleOfficerInspectionStarted(int itemsToHide)
     {
-        _dialogueSystem.ShowDialogue($"Officer is inspecting! Hide {itemsToHide} items quickly!");
+        _dialogueSystem.ShowDialogue($"Kontrola! Szybko schowaj {itemsToHide} przedmiotów!");
     }
 
     // =======================
@@ -318,7 +318,7 @@ public class EventHandler : MonoBehaviour
 
     private void HandleRumorsSpread()
     {
-        _dialogueSystem.ShowDialogue("Rumors are spreading. Passive risk increased.");
+        _dialogueSystem.ShowDialogue("Rozchodzą się plotki. Ryzyko rośnie.");
         _riskManager.AddRisk(2);
     }
 
@@ -354,7 +354,7 @@ public class EventHandler : MonoBehaviour
 
     private void HandleUrgentDelivery()
     {
-        _dialogueSystem.ShowDialogue("Maria delivered urgent materials. Make space quickly!");
+        _dialogueSystem.ShowDialogue("Maria dostarczyła pilne materiały. Szybko zrób miejsce!");
     }
 
     private void HandlePackageUncertain()
@@ -414,7 +414,7 @@ public class EventHandler : MonoBehaviour
 
     private void HandleLampExplosion()
     {
-        _dialogueSystem.ShowDialogue("Small lamp explosion! Risk increased slightly.");
+        _dialogueSystem.ShowDialogue("Mała eksplozja lampy! Ryzyko nieco wzrosło.");
         _riskManager.AddRisk(2);
     }
 
@@ -423,38 +423,38 @@ public class EventHandler : MonoBehaviour
     private void HandleLetterFromPanKowal()
     {
         _dialogueSystem.ShowDialogue(
-            "Letter from Pan Kowal received. Contains instructions or moral dilemma."
+            "Nadszedł list od Pana Kowala. Zawiera instrukcje i moralny dylemat."
         );
     }
 
     private void HandleMariaWarns()
     {
-        _dialogueSystem.ShowDialogue("Maria warns you of possible inspection tomorrow.");
+        _dialogueSystem.ShowDialogue("Maria ostrzega przed możliwą kontrolą jutro.");
         _riskManager.AddRisk(1);
     }
 
     private void HandleInformerDisappears()
     {
-        _dialogueSystem.ShowDialogue("Informer has disappeared. Situation uncertain.");
+        _dialogueSystem.ShowDialogue("Donosiciel zniknął. Sytuacja jest niepewna.");
     }
 
     // =======================
     // 7. Stresujące
     private void HandleLoudNoise()
     {
-        _dialogueSystem.ShowDialogue("Loud noise! Quickly hide suspicious items!");
+        _dialogueSystem.ShowDialogue("Głośny hałas! Szybko schowaj podejrzane przedmioty!");
     }
 
     private void HandleFireCandle()
     {
         _resourceManager.TrySpend(costPaper: Mathf.Abs(_resourceManager.Paper / 5));
-        _dialogueSystem.ShowDialogue("Candle caught fire! Lost some paper.");
+        _dialogueSystem.ShowDialogue("Świeca zajęła się ogniem! Straciłeś trochę papieru.");
     }
 
     private void HandleBrokenLock()
     {
         _riskManager.AddRisk(3);
-        _dialogueSystem.ShowDialogue("Broken lock! Risk increased for the next event.");
+        _dialogueSystem.ShowDialogue("Zepsuty zamek! Ryzyko wzrosło do następnego zdarzenia.");
     }
 
     // =======================

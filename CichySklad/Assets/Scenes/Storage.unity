@@ -2414,7 +2414,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Someone is knocking at the door! \nWhat do you do?
+  m_text: "Ktoś puka do drzwi!\nCo robisz?"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c16924e6c8174a840837cc358d85396e, type: 2}
   m_sharedMaterial: {fileID: -8923269539605571541, guid: c16924e6c8174a840837cc358d85396e, type: 2}
@@ -3577,7 +3577,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Space Left: 2'
+  m_text: 'Wolne miejsce: 2'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5038,6 +5038,7 @@ GameObject:
   - component: {fileID: 982438196}
   - component: {fileID: 982438197}
   - component: {fileID: 982438198}
+  - component: {fileID: 982438200}
   m_Layer: 0
   m_Name: Manger
   m_TagString: Untagged
@@ -5221,6 +5222,7 @@ MonoBehaviour:
   _riskManager: {fileID: 982438196}
   _resourceManager: {fileID: 982438191}
   _dialogueSystem: {fileID: 982438193}
+  _eventScheduler: {fileID: 982438200}
   _dayDuration: 30
   _daySprites:
   - {fileID: 5104677172394890368, guid: b9af4aa8551491644aa67201abf32935, type: 3}
@@ -5233,7 +5235,21 @@ MonoBehaviour:
   _dayScreen: {fileID: 965589486}
   _dayText: {fileID: 300097639}
   _winDay: 7
+  _winTrustThreshold: 50
   _endGameSceneName: EndGame
+--- !u!114 &982438200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982438190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98271377544e4f90bbf8b93ef8e626f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CichySklad.Runtime::EventScheduler
+  _resourceManager: {fileID: 982438191}
 --- !u!1 &990669771
 GameObject:
   m_ObjectHideFlags: 0
@@ -6049,7 +6065,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Space Left: 2'
+  m_text: 'Wolne miejsce: 2'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -7513,7 +7529,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Space Left: 2'
+  m_text: 'Wolne miejsce: 2'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8447,7 +8463,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Space Left: 2'
+  m_text: 'Wolne miejsce: 2'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -9117,7 +9133,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Space Left: 2'
+  m_text: 'Wolne miejsce: 2'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -10153,7 +10169,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Space Left: 2'
+  m_text: 'Wolne miejsce: 2'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

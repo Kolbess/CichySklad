@@ -163,7 +163,7 @@ public class HidingSpot : MonoBehaviour
     private void UpdateCapacity()
     {
         _capacity = _objects.Count;
-        _capacityText.text = $"Space Left: {_maxCapacity - _capacity}";
+        _capacityText.text = $"Wolne miejsce: {_maxCapacity - _capacity}";
     }
 
     private void ShowContent()
