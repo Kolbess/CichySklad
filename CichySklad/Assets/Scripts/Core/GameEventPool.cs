@@ -47,19 +47,57 @@ public static class GameEventPool
             new GameEventDefinition(GameEventId.StuckHidingSpot, weight: 4),
             new GameEventDefinition(GameEventId.StrangerNeedsHelp, weight: 4, minDay: 2),
             new GameEventDefinition(GameEventId.LampExplosion, weight: 3),
-            // 6. Fabularne — one-shot story beats, gated to later days.
+            // 6. Fabularne — three multi-stage threads. Each stage is one-shot; stage 2 requires its
+            // thread's "stage 1 done" flag, so the beats always arrive in order, in sensible day
+            // windows. Weights are high so story reliably surfaces inside its window. Branch flags
+            // (MariaHeeded / KowalAcceptedTask / InformerAppeased) are read inside the handlers.
+            // -- Maria (łączniczka) --
             new GameEventDefinition(
-                GameEventId.LetterFromPanKowal,
-                weight: 3,
-                minDay: 2,
+                GameEventId.MariaWarns,
+                weight: 20,
+                minDay: 1,
+                maxDay: 3,
                 once: true
             ),
-            new GameEventDefinition(GameEventId.MariaWarns, weight: 4),
+            new GameEventDefinition(
+                GameEventId.MariaRequest,
+                weight: 20,
+                minDay: 3,
+                maxDay: 7,
+                once: true,
+                requiredFlags: new[] { StoryFlag.MariaStage1Done }
+            ),
+            // -- Pan Kowal (szef konspiracji) --
+            new GameEventDefinition(
+                GameEventId.LetterFromPanKowal,
+                weight: 20,
+                minDay: 2,
+                maxDay: 4,
+                once: true
+            ),
+            new GameEventDefinition(
+                GameEventId.KowalTask,
+                weight: 20,
+                minDay: 4,
+                maxDay: 8,
+                once: true,
+                requiredFlags: new[] { StoryFlag.KowalStage1Done }
+            ),
+            // -- Donosiciel (informer): rising suspicion -> climax --
+            new GameEventDefinition(
+                GameEventId.InformerSuspicion,
+                weight: 20,
+                minDay: 2,
+                maxDay: 4,
+                once: true
+            ),
             new GameEventDefinition(
                 GameEventId.InformerDisappears,
-                weight: 3,
-                minDay: 3,
-                once: true
+                weight: 20,
+                minDay: 5,
+                maxDay: 11,
+                once: true,
+                requiredFlags: new[] { StoryFlag.InformerStage1Done }
             ),
             // 7. Stresujące / natychmiastowe
             new GameEventDefinition(GameEventId.LoudNoise, weight: 5),

@@ -13,13 +13,16 @@ public static class EventSelector
     /// <summary>
     /// Returns every definition in <paramref name="pool"/> eligible on <paramref name="day"/> at
     /// <paramref name="riskLevel"/>, excluding one-shot events whose id is in
-    /// <paramref name="firedOnceEvents"/>. Order follows the pool for deterministic weighting.
+    /// <paramref name="firedOnceEvents"/> and honouring story-flag gating against
+    /// <paramref name="activeFlags"/> (null = no flags set). Order follows the pool for
+    /// deterministic weighting.
     /// </summary>
     public static List<GameEventDefinition> Eligible(
         IReadOnlyList<GameEventDefinition> pool,
         int day,
         RiskLevel riskLevel,
-        ISet<GameEventId> firedOnceEvents
+        ISet<GameEventId> firedOnceEvents,
+        IReadOnlyCollection<StoryFlag> activeFlags = null
     )
     {
         if (pool == null)
@@ -29,7 +32,7 @@ public static class EventSelector
         foreach (GameEventDefinition def in pool)
         {
             bool alreadyFired = firedOnceEvents != null && firedOnceEvents.Contains(def.Id);
-            if (def.IsEligible(day, riskLevel, alreadyFired))
+            if (def.IsEligible(day, riskLevel, alreadyFired, activeFlags))
                 eligible.Add(def);
         }
         return eligible;

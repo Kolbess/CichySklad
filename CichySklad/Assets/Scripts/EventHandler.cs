@@ -28,6 +28,10 @@ public class EventHandler : MonoBehaviour
     [SerializeField]
     private ResourceManager _resourceManager;
 
+    [Tooltip("Story-flag store that records branch decisions across the story threads. Required.")]
+    [SerializeField]
+    private StoryState _storyState;
+
     private void Awake()
     {
         Assert.IsNotNull(
@@ -46,6 +50,7 @@ public class EventHandler : MonoBehaviour
             _resourceManager,
             $"[{nameof(EventHandler)}] ResourceManager unassigned on {name}!"
         );
+        Assert.IsNotNull(_storyState, $"[{nameof(EventHandler)}] StoryState unassigned on {name}!");
     }
 
     private void OnEnable()
@@ -78,9 +83,12 @@ public class EventHandler : MonoBehaviour
         GameEvents.OnStrangerNeedsHelp += HandleStrangerNeedsHelp;
         GameEvents.OnLampExplosion += HandleLampExplosion;
 
-        // 6. Fabularne
-        GameEvents.OnLetterFromPanKowal += HandleLetterFromPanKowal;
+        // 6. Fabularne (multi-stage story threads)
         GameEvents.OnMariaWarns += HandleMariaWarns;
+        GameEvents.OnMariaRequest += HandleMariaRequest;
+        GameEvents.OnLetterFromPanKowal += HandleLetterFromPanKowal;
+        GameEvents.OnKowalTask += HandleKowalTask;
+        GameEvents.OnInformerSuspicion += HandleInformerSuspicion;
         GameEvents.OnInformerDisappears += HandleInformerDisappears;
 
         // 7. Stresujące
@@ -125,9 +133,12 @@ public class EventHandler : MonoBehaviour
         GameEvents.OnStrangerNeedsHelp -= HandleStrangerNeedsHelp;
         GameEvents.OnLampExplosion -= HandleLampExplosion;
 
-        // 6. Fabularne
-        GameEvents.OnLetterFromPanKowal -= HandleLetterFromPanKowal;
+        // 6. Fabularne (multi-stage story threads)
         GameEvents.OnMariaWarns -= HandleMariaWarns;
+        GameEvents.OnMariaRequest -= HandleMariaRequest;
+        GameEvents.OnLetterFromPanKowal -= HandleLetterFromPanKowal;
+        GameEvents.OnKowalTask -= HandleKowalTask;
+        GameEvents.OnInformerSuspicion -= HandleInformerSuspicion;
         GameEvents.OnInformerDisappears -= HandleInformerDisappears;
 
         // 7. Stresujące
@@ -458,20 +469,233 @@ public class EventHandler : MonoBehaviour
     // 6. Fabularne
     private void HandleLetterFromPanKowal()
     {
-        _dialogueSystem.ShowDialogue(
-            "Nadszedł list od Pana Kowala. Zawiera instrukcje i moralny dylemat."
+        HandleKowalStage1();
+    }
+
+    // --- Maria (łączniczka): warning -> request, branching on whether she was heeded ---
+    private void HandleMariaWarns()
+    {
+        _storyState.Set(StoryFlag.MariaStage1Done);
+        var choices = new DialogueSystem.Choice[]
+        {
+            // Trust her and lie low — suspicion cools and Maria remembers the trust.
+            new DialogueSystem.Choice(
+                "Zaufaj i przygotuj się",
+                () =>
+                {
+                    _riskManager.ReduceRisk(10);
+                    _storyState.Set(StoryFlag.MariaHeeded);
+                }
+            ),
+            // Brush the warning off — you keep working, and risk climbs.
+            new DialogueSystem.Choice("Zlekceważ ostrzeżenie", () => _riskManager.AddRisk(10)),
+        };
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Maria: „Szykuje się kontrola. Przygotuj się, proszę.”",
+            choices,
+            _dialogueSystem.GetPortraitSprite("maria")
         );
     }
 
-    private void HandleMariaWarns()
+    private void HandleMariaRequest()
     {
-        _dialogueSystem.ShowDialogue("Maria ostrzega przed możliwą kontrolą jutro.");
-        _riskManager.AddRisk(1);
+        if (_storyState.Has(StoryFlag.MariaHeeded))
+        {
+            // Continuity: because you trusted her, Maria brings supplies and a warm ask.
+            var choices = new DialogueSystem.Choice[]
+            {
+                new DialogueSystem.Choice(
+                    "Pomóż jej w dostawie",
+                    () =>
+                    {
+                        _resourceManager.AddTrust(10);
+                        _riskManager.AddRisk(5);
+                    }
+                ),
+                new DialogueSystem.Choice(
+                    "Odmów, zbyt ryzykowne",
+                    () => _resourceManager.AddTrust(-3)
+                ),
+            };
+            _dialogueSystem.ShowDialogueWithChoices(
+                "Maria ufa ci i przynosi zapas: „Pomożesz przy pilnej dostawie?”",
+                choices,
+                _dialogueSystem.GetPortraitSprite("maria")
+            );
+        }
+        else
+        {
+            // Continuity: you shrugged her off before — now she is guarded.
+            var choices = new DialogueSystem.Choice[]
+            {
+                new DialogueSystem.Choice(
+                    "Spróbuj naprawić relację (2 ruble)",
+                    () =>
+                    {
+                        if (_resourceManager.TrySpend(costMoney: 2))
+                            _resourceManager.AddTrust(5);
+                        else
+                            _riskManager.AddRisk(3);
+                    }
+                ),
+                new DialogueSystem.Choice(
+                    "Zignoruj ją",
+                    () =>
+                    {
+                        _resourceManager.AddTrust(-5);
+                        _riskManager.AddRisk(5);
+                    }
+                ),
+            };
+            _dialogueSystem.ShowDialogueWithChoices(
+                "Maria patrzy na ciebie z rezerwą: „Ostatnio mnie nie posłuchałeś.”",
+                choices,
+                _dialogueSystem.GetPortraitSprite("maria")
+            );
+        }
+    }
+
+    // --- Pan Kowal (szef konspiracji): a moral dilemma -> its follow-up job ---
+    private void HandleKowalStage1()
+    {
+        _storyState.Set(StoryFlag.KowalStage1Done);
+        var choices = new DialogueSystem.Choice[]
+        {
+            // Help the movement at your own peril.
+            new DialogueSystem.Choice(
+                "Podejmij zadanie",
+                () =>
+                {
+                    _riskManager.AddRisk(10);
+                    _resourceManager.AddTrust(10);
+                    _storyState.Set(StoryFlag.KowalAcceptedTask);
+                }
+            ),
+            // Save yourself; the cell notes your caution.
+            new DialogueSystem.Choice(
+                "Odmów, to zbyt niebezpieczne",
+                () =>
+                {
+                    _riskManager.ReduceRisk(5);
+                    _resourceManager.AddTrust(-5);
+                }
+            ),
+        };
+        _dialogueSystem.ShowDialogueWithChoices(
+            "List Pana Kowala: „Wydrukuj odezwę. To ryzykowne, ale ruch cię potrzebuje.”",
+            choices,
+            _dialogueSystem.GetPortraitSprite("kowal")
+        );
+    }
+
+    private void HandleKowalTask()
+    {
+        if (_storyState.Has(StoryFlag.KowalAcceptedTask))
+        {
+            // Continuity: you took the job — now deliver, or lose the cell's respect.
+            var choices = new DialogueSystem.Choice[]
+            {
+                new DialogueSystem.Choice(
+                    "Rozprowadź ulotki",
+                    () =>
+                    {
+                        _riskManager.AddRisk(10);
+                        _resourceManager.AddTrust(10);
+                    }
+                ),
+                new DialogueSystem.Choice(
+                    "Wycofaj się w ostatniej chwili",
+                    () =>
+                    {
+                        _resourceManager.AddTrust(-8);
+                        _riskManager.ReduceRisk(5);
+                    }
+                ),
+            };
+            _dialogueSystem.ShowDialogueWithChoices(
+                "Pan Kowal: „Czas dostarczyć odezwy. Liczę na ciebie.”",
+                choices,
+                _dialogueSystem.GetPortraitSprite("kowal")
+            );
+        }
+        else
+        {
+            // Continuity: you declined before — Kowal offers only a minor role now.
+            var choices = new DialogueSystem.Choice[]
+            {
+                new DialogueSystem.Choice(
+                    "Przyjmij drobną robotę",
+                    () =>
+                    {
+                        _resourceManager.AddTrust(4);
+                        _riskManager.AddRisk(3);
+                    }
+                ),
+                new DialogueSystem.Choice(
+                    "Trzymaj się z boku",
+                    () => _resourceManager.AddTrust(-3)
+                ),
+            };
+            _dialogueSystem.ShowDialogueWithChoices(
+                "Pan Kowal: „Skoro wtedy odmówiłeś, mam dla ciebie tylko drobiazg.”",
+                choices,
+                _dialogueSystem.GetPortraitSprite("kowal")
+            );
+        }
+    }
+
+    // --- Donosiciel (informer): rising suspicion -> climax (vanishes or denounces) ---
+    private void HandleInformerSuspicion()
+    {
+        _storyState.Set(StoryFlag.InformerStage1Done);
+        var choices = new DialogueSystem.Choice[]
+        {
+            // Buy his silence now — appeased, he stays quiet (sets up a calm climax).
+            new DialogueSystem.Choice(
+                "Przekup go (4 ruble)",
+                () =>
+                {
+                    if (_resourceManager.TrySpend(costMoney: 4))
+                    {
+                        _riskManager.ReduceRisk(8);
+                        _storyState.Set(StoryFlag.InformerAppeased);
+                    }
+                    else
+                    {
+                        _riskManager.AddRisk(8);
+                    }
+                }
+            ),
+            // Stonewall him — suspicion festers toward a bad ending.
+            new DialogueSystem.Choice("Udawaj obojętność", () => _riskManager.AddRisk(6)),
+        };
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Donosiciel kręci się koło składu i węszy.",
+            choices,
+            _dialogueSystem.GetPortraitSprite("neighbour")
+        );
     }
 
     private void HandleInformerDisappears()
     {
-        _dialogueSystem.ShowDialogue("Donosiciel zniknął. Sytuacja jest niepewna.");
+        if (_storyState.Has(StoryFlag.InformerAppeased))
+        {
+            // Continuity: bought off earlier, he slips away quietly — relief.
+            _riskManager.ReduceRisk(10);
+            _dialogueSystem.ShowDialogue(
+                "Donosiciel cichaczem znika z okolicy. Odetchnąłeś z ulgą.",
+                _dialogueSystem.GetPortraitSprite("neighbour")
+            );
+        }
+        else
+        {
+            // Continuity: never appeased — he denounces you. The climax spikes risk hard.
+            _riskManager.AddRisk(30);
+            _dialogueSystem.ShowDialogue(
+                "Donosiciel doniósł na ciebie! Ochrana już węszy pod składem.",
+                _dialogueSystem.GetPortraitSprite("neighbour")
+            );
+        }
     }
 
     // =======================

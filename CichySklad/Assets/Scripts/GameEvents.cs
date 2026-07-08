@@ -53,9 +53,12 @@ public static class GameEvents
     public static event Action OnStrangerNeedsHelp;
     public static event Action OnLampExplosion;
 
-    // 6. Fabularne / cutscenki
-    public static event Action OnLetterFromPanKowal;
+    // 6. Fabularne / cutscenki (multi-stage story threads)
     public static event Action OnMariaWarns;
+    public static event Action OnMariaRequest;
+    public static event Action OnLetterFromPanKowal;
+    public static event Action OnKowalTask;
+    public static event Action OnInformerSuspicion;
     public static event Action OnInformerDisappears;
 
     // 7. Stresujące / natychmiastowe
@@ -131,9 +134,15 @@ public static class GameEvents
     public static void LampExplosion() => OnLampExplosion?.Invoke();
 
     // 6. Fabularne
+    public static void MariaWarns() => OnMariaWarns?.Invoke();
+
+    public static void MariaRequest() => OnMariaRequest?.Invoke();
+
     public static void LetterFromPanKowal() => OnLetterFromPanKowal?.Invoke();
 
-    public static void MariaWarns() => OnMariaWarns?.Invoke();
+    public static void KowalTask() => OnKowalTask?.Invoke();
+
+    public static void InformerSuspicion() => OnInformerSuspicion?.Invoke();
 
     public static void InformerDisappears() => OnInformerDisappears?.Invoke();
 

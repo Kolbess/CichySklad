@@ -23,6 +23,7 @@ public class EventHandlerPlayTests : PlayModeTestBase
         SetField(handler, "_inspectionSystem", inspection);
         SetField(handler, "_riskManager", _risk);
         SetField(handler, "_resourceManager", resources);
+        SetField(handler, "_storyState", BuildStoryState());
         Activate(handler);
     }
 

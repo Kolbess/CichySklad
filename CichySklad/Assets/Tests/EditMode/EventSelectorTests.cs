@@ -10,8 +10,6 @@ using NUnit.Framework;
 /// </summary>
 public class EventSelectorTests
 {
-    private static readonly HashSet<GameEventId> NoneFired = new HashSet<GameEventId>();
-
     // Weights 1 / 3 / 2 -> total 6. Cumulative bands: [0,1) [1,4) [4,6).
     private static List<GameEventDefinition> SyntheticPool() =>
         new List<GameEventDefinition>
@@ -168,17 +166,105 @@ public class EventSelectorTests
     }
 
     [Test]
-    public void DefaultPool_EveryEventIsReachableAcrossDaysAndRiskBands()
+    public void DefaultPool_EveryEventIsReachableGivenItsStoryPrerequisites()
     {
-        List<GameEventDefinition> pool = GameEventPool.Default();
-        var reachable = new HashSet<GameEventId>();
+        // An event is reachable if some (day, risk) makes it eligible once its required story flags
+        // are set (later story stages unlock only after earlier ones fire).
+        foreach (GameEventDefinition def in GameEventPool.Default())
+        {
+            var active = new HashSet<StoryFlag>(def.RequiredFlags);
+            bool reachable = false;
 
-        for (int day = 1; day <= 12; day++)
-            foreach (RiskLevel risk in Enum.GetValues(typeof(RiskLevel)))
-            foreach (GameEventDefinition def in EventSelector.Eligible(pool, day, risk, NoneFired))
-                reachable.Add(def.Id);
+            for (int day = 1; day <= 14 && !reachable; day++)
+                foreach (RiskLevel risk in Enum.GetValues(typeof(RiskLevel)))
+                    if (def.IsEligible(day, risk, alreadyFired: false, active))
+                    {
+                        reachable = true;
+                        break;
+                    }
 
-        foreach (GameEventId id in Enum.GetValues(typeof(GameEventId)))
-            Assert.IsTrue(reachable.Contains(id), $"{id} is never eligible — unreachable event.");
+            Assert.IsTrue(reachable, $"{def.Id} is never eligible — unreachable event.");
+        }
+    }
+
+    // ---- Story-flag gating -------------------------------------------------
+
+    [Test]
+    public void IsEligible_MissingRequiredFlag_IsFalseUntilFlagSet()
+    {
+        var def = new GameEventDefinition(
+            GameEventId.MariaRequest,
+            weight: 1,
+            requiredFlags: new[] { StoryFlag.MariaStage1Done }
+        );
+
+        Assert.IsFalse(def.IsEligible(5, RiskLevel.Low, false, new HashSet<StoryFlag>()));
+        Assert.IsTrue(
+            def.IsEligible(
+                5,
+                RiskLevel.Low,
+                false,
+                new HashSet<StoryFlag> { StoryFlag.MariaStage1Done }
+            )
+        );
+    }
+
+    [Test]
+    public void IsEligible_ForbiddenFlagPresent_IsFalse()
+    {
+        var def = new GameEventDefinition(
+            GameEventId.KnockAtDoor,
+            weight: 1,
+            forbiddenFlags: new[] { StoryFlag.MariaHeeded }
+        );
+
+        Assert.IsTrue(def.IsEligible(1, RiskLevel.Low, false, new HashSet<StoryFlag>()));
+        Assert.IsFalse(
+            def.IsEligible(
+                1,
+                RiskLevel.Low,
+                false,
+                new HashSet<StoryFlag> { StoryFlag.MariaHeeded }
+            )
+        );
+    }
+
+    [Test]
+    public void Eligible_UnlocksStoryStageTwoOnlyAfterStageOneFlag()
+    {
+        var pool = new List<GameEventDefinition>
+        {
+            new GameEventDefinition(GameEventId.MariaWarns, weight: 1),
+            new GameEventDefinition(
+                GameEventId.MariaRequest,
+                weight: 1,
+                requiredFlags: new[] { StoryFlag.MariaStage1Done }
+            ),
+        };
+        var noEvents = new HashSet<GameEventId>();
+
+        List<GameEventDefinition> beforeStage1 = EventSelector.Eligible(
+            pool,
+            5,
+            RiskLevel.Low,
+            noEvents,
+            new HashSet<StoryFlag>()
+        );
+        CollectionAssert.AreEquivalent(
+            new[] { GameEventId.MariaWarns },
+            beforeStage1.Select(d => d.Id).ToList()
+        );
+
+        List<GameEventDefinition> afterStage1 = EventSelector.Eligible(
+            pool,
+            5,
+            RiskLevel.Low,
+            noEvents,
+            new HashSet<StoryFlag> { StoryFlag.MariaStage1Done }
+        );
+        CollectionAssert.AreEquivalent(
+            new[] { GameEventId.MariaWarns, GameEventId.MariaRequest },
+            afterStage1.Select(d => d.Id).ToList()
+        );
     }
 }

@@ -1,14 +1,19 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Pure, immutable metadata describing when one <see cref="GameEventId"/> may be rolled from the
-/// daily pool: its selection weight, the day window it is active in, the risk band it requires, and
-/// whether it is a one-shot story beat. No engine dependency, so the whole pool and its selection
-/// are unit-testable in EditMode. The runtime <c>EventScheduler</c> pairs each definition with the
-/// concrete trigger that raises the matching <c>GameEvents</c> beat.
+/// daily pool: its selection weight, the day window it is active in, the risk band it requires,
+/// whether it is a one-shot beat, and the story flags it needs (or must avoid). No engine
+/// dependency, so the whole pool and its selection are unit-testable in EditMode. The runtime
+/// <c>EventScheduler</c> pairs each definition with the concrete trigger that raises the matching
+/// <c>GameEvents</c> beat.
 /// </summary>
 public sealed class GameEventDefinition
 {
+    private static readonly StoryFlag[] NoFlags = Array.Empty<StoryFlag>();
+
     /// <summary>Which event this describes.</summary>
     public GameEventId Id { get; }
 
@@ -30,6 +35,12 @@ public sealed class GameEventDefinition
     /// <summary>When true, the event may fire at most once per run (story / cutscene beats).</summary>
     public bool Once { get; }
 
+    /// <summary>All of these story flags must be active for the event to be eligible (gates later stages).</summary>
+    public IReadOnlyList<StoryFlag> RequiredFlags { get; }
+
+    /// <summary>None of these story flags may be active, or the event is skipped (mutually-exclusive branches).</summary>
+    public IReadOnlyList<StoryFlag> ForbiddenFlags { get; }
+
     public GameEventDefinition(
         GameEventId id,
         int weight,
@@ -37,7 +48,9 @@ public sealed class GameEventDefinition
         int maxDay = int.MaxValue,
         RiskLevel minRiskLevel = RiskLevel.Low,
         RiskLevel maxRiskLevel = RiskLevel.Critical,
-        bool once = false
+        bool once = false,
+        IReadOnlyList<StoryFlag> requiredFlags = null,
+        IReadOnlyList<StoryFlag> forbiddenFlags = null
     )
     {
         if (weight <= 0)
@@ -67,13 +80,22 @@ public sealed class GameEventDefinition
         MinRiskLevel = minRiskLevel;
         MaxRiskLevel = maxRiskLevel;
         Once = once;
+        RequiredFlags = requiredFlags ?? NoFlags;
+        ForbiddenFlags = forbiddenFlags ?? NoFlags;
     }
 
     /// <summary>
     /// True when this event may be rolled on <paramref name="day"/> at <paramref name="riskLevel"/>,
-    /// given whether it has <paramref name="alreadyFired"/> (only meaningful for <see cref="Once"/>).
+    /// given whether it has <paramref name="alreadyFired"/> (only meaningful for <see cref="Once"/>)
+    /// and the currently <paramref name="activeFlags"/> (null = none set). Story gating: every
+    /// required flag must be active and no forbidden flag may be.
     /// </summary>
-    public bool IsEligible(int day, RiskLevel riskLevel, bool alreadyFired)
+    public bool IsEligible(
+        int day,
+        RiskLevel riskLevel,
+        bool alreadyFired,
+        IReadOnlyCollection<StoryFlag> activeFlags = null
+    )
     {
         if (Once && alreadyFired)
             return false;
@@ -81,6 +103,16 @@ public sealed class GameEventDefinition
             return false;
         if (riskLevel < MinRiskLevel || riskLevel > MaxRiskLevel)
             return false;
+
+        for (int i = 0; i < RequiredFlags.Count; i++)
+            if (activeFlags == null || !activeFlags.Contains(RequiredFlags[i]))
+                return false;
+
+        if (activeFlags != null)
+            for (int i = 0; i < ForbiddenFlags.Count; i++)
+                if (activeFlags.Contains(ForbiddenFlags[i]))
+                    return false;
+
         return true;
     }
 }

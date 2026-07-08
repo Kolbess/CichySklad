@@ -30,6 +30,7 @@ public class EventHandlerChoicePlayTests : PlayModeTestBase
         SetField(handler, "_inspectionSystem", inspection);
         SetField(handler, "_riskManager", _risk);
         SetField(handler, "_resourceManager", _resources);
+        SetField(handler, "_storyState", BuildStoryState());
         Activate(handler);
 
         yield return null; // let every Start() settle the starting resources and hide the box

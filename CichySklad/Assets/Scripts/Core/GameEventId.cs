@@ -36,10 +36,13 @@ public enum GameEventId
     StrangerNeedsHelp,
     LampExplosion,
 
-    // 6. Fabularne / cutscenki
-    LetterFromPanKowal,
-    MariaWarns,
-    InformerDisappears,
+    // 6. Fabularne / cutscenki (multi-stage threads — see StoryFlag)
+    MariaWarns, // Maria thread, stage 1
+    MariaRequest, // Maria thread, stage 2 (branches on MariaHeeded)
+    LetterFromPanKowal, // Kowal thread, stage 1
+    KowalTask, // Kowal thread, stage 2 (branches on KowalAcceptedTask)
+    InformerSuspicion, // Informer thread, stage 1
+    InformerDisappears, // Informer thread, stage 2 (branches on InformerAppeased)
 
     // 7. Stresujące / natychmiastowe
     LoudNoise,

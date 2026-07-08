@@ -19,6 +19,10 @@ public class EventScheduler : MonoBehaviour
     [SerializeField]
     private ResourceManager _resourceManager;
 
+    [Tooltip("Story-flag store consulted to gate multi-stage story beats. Required.")]
+    [SerializeField]
+    private StoryState _storyState;
+
     // Maps every schedulable id to the GameEvents beat it raises. Static: GameEvents methods are
     // static, and Awake asserts this covers the whole GameEventId enum so a selected id can never
     // land on a missing trigger.
@@ -44,8 +48,11 @@ public class EventScheduler : MonoBehaviour
         { GameEventId.StuckHidingSpot, GameEvents.StuckHidingSpot },
         { GameEventId.StrangerNeedsHelp, GameEvents.StrangerNeedsHelp },
         { GameEventId.LampExplosion, GameEvents.LampExplosion },
-        { GameEventId.LetterFromPanKowal, GameEvents.LetterFromPanKowal },
         { GameEventId.MariaWarns, GameEvents.MariaWarns },
+        { GameEventId.MariaRequest, GameEvents.MariaRequest },
+        { GameEventId.LetterFromPanKowal, GameEvents.LetterFromPanKowal },
+        { GameEventId.KowalTask, GameEvents.KowalTask },
+        { GameEventId.InformerSuspicion, GameEvents.InformerSuspicion },
         { GameEventId.InformerDisappears, GameEvents.InformerDisappears },
         { GameEventId.LoudNoise, GameEvents.LoudNoise },
         { GameEventId.FireCandle, GameEvents.FireCandle },
@@ -65,6 +72,10 @@ public class EventScheduler : MonoBehaviour
         Assert.IsNotNull(
             _resourceManager,
             $"[{nameof(EventScheduler)}] ResourceManager unassigned on {name}!"
+        );
+        Assert.IsNotNull(
+            _storyState,
+            $"[{nameof(EventScheduler)}] StoryState unassigned on {name}!"
         );
 
         foreach (GameEventId id in Enum.GetValues(typeof(GameEventId)))
@@ -98,7 +109,8 @@ public class EventScheduler : MonoBehaviour
             _pool,
             day,
             riskLevel,
-            _firedOnceEvents
+            _firedOnceEvents,
+            _storyState.ActiveFlags
         );
         if (eligible.Count == 0)
             return false;

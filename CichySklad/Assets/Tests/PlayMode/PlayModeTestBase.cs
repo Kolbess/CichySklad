@@ -170,11 +170,20 @@ public abstract class PlayModeTestBase
         return dialogue;
     }
 
+    /// <summary>An active, empty <see cref="StoryState"/> for gating story beats and branch flags.</summary>
+    protected StoryState BuildStoryState()
+    {
+        StoryState story = AddInactive<StoryState>(out _, "StoryState");
+        Activate(story);
+        return story;
+    }
+
     /// <summary>Wires an <see cref="EventScheduler"/> against an existing resource source.</summary>
     protected EventScheduler BuildEventScheduler(ResourceManager resources)
     {
         EventScheduler scheduler = AddInactive<EventScheduler>(out _, "EventScheduler");
         SetField(scheduler, "_resourceManager", resources);
+        SetField(scheduler, "_storyState", BuildStoryState());
         Activate(scheduler);
         return scheduler;
     }
