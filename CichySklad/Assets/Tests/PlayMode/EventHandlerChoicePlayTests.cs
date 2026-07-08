@@ -237,4 +237,42 @@ public class EventHandlerChoicePlayTests : PlayModeTestBase
         ClickChoice(1); // Odrzuć ofertę -> trust +2
         Assert.AreEqual(2, _resources.Trust);
     }
+
+    [UnityTest]
+    public IEnumerator OchranaRaid_BribeBuysSafety_SubmitCostsRiskAndTrust()
+    {
+        yield return BuildStack();
+        _risk.SetRisk(30f);
+
+        GameEvents.OchranaRaid();
+        float b0 = _risk.CurrentRisk;
+        ClickChoice(0); // Wręcz łapówkę (5 rubli) -> money 5->0, risk -20
+        Assert.AreEqual(0, _resources.Money);
+        Assert.AreEqual(b0 - 20f, _risk.CurrentRisk, Tol);
+
+        yield return null;
+        GameEvents.OchranaRaid();
+        float b1 = _risk.CurrentRisk;
+        ClickChoice(1); // Poddaj się rewizji -> risk +10, trust -3
+        Assert.AreEqual(b1 + 10f, _risk.CurrentRisk, Tol);
+        Assert.AreEqual(-3, _resources.Trust);
+    }
+
+    [UnityTest]
+    public IEnumerator LoudNoise_HideLowersRisk_IgnoreRaisesIt()
+    {
+        yield return BuildStack();
+        _risk.SetRisk(20f);
+
+        GameEvents.LoudNoise();
+        float b0 = _risk.CurrentRisk;
+        ClickChoice(0); // Błyskawicznie chowaj sprzęt -> -8
+        Assert.AreEqual(b0 - 8f, _risk.CurrentRisk, Tol);
+
+        yield return null;
+        GameEvents.LoudNoise();
+        float b1 = _risk.CurrentRisk;
+        ClickChoice(1); // Udawaj, że nic się nie stało -> +10
+        Assert.AreEqual(b1 + 10f, _risk.CurrentRisk, Tol);
+    }
 }

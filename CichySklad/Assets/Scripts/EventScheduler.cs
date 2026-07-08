@@ -30,6 +30,7 @@ public class EventScheduler : MonoBehaviour
         { GameEventId.KnockAtDoor, GameEvents.KnockAtDoor },
         { GameEventId.NeighborPeeking, GameEvents.NeighborPeeking },
         { GameEventId.OchranaStepsHeard, GameEvents.OchranaStepsHeard },
+        { GameEventId.OchranaRaid, GameEvents.OchranaRaid },
         { GameEventId.OutOfInk, GameEvents.OutOfInk },
         { GameEventId.LostPaperBatch, GameEvents.LostPaperBatch },
         { GameEventId.MoistureDamage, GameEvents.MoistureDamage },

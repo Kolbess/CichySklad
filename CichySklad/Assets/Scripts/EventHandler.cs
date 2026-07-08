@@ -54,6 +54,7 @@ public class EventHandler : MonoBehaviour
         GameEvents.OnKnockAtDoor += HandleKnockAtDoor;
         GameEvents.OnNeighborPeeking += HandleNeighborPeeking;
         GameEvents.OnOchranaStepsHeard += HandleOchranaSteps;
+        GameEvents.OnOchranaRaid += HandleOchranaRaid;
         GameEvents.OnOfficerInspectionStarted += HandleOfficerInspectionStarted;
 
         // 2. Zasoby
@@ -100,6 +101,7 @@ public class EventHandler : MonoBehaviour
         GameEvents.OnKnockAtDoor -= HandleKnockAtDoor;
         GameEvents.OnNeighborPeeking -= HandleNeighborPeeking;
         GameEvents.OnOchranaStepsHeard -= HandleOchranaSteps;
+        GameEvents.OnOchranaRaid -= HandleOchranaRaid;
         GameEvents.OnOfficerInspectionStarted -= HandleOfficerInspectionStarted;
 
         // 2. Zasoby
@@ -195,6 +197,40 @@ public class EventHandler : MonoBehaviour
         };
         _dialogueSystem.ShowDialogueWithChoices(
             "Słyszysz kroki Ochrany za drzwiami.",
+            choices,
+            _dialogueSystem.GetPortraitSprite("ochrana")
+        );
+    }
+
+    private void HandleOchranaRaid()
+    {
+        const int bribe = 5; // rubli
+
+        var choices = new DialogueSystem.Choice[]
+        {
+            // Buy your way out of the search. If you can't pay, the fumbling looks guilty.
+            new DialogueSystem.Choice(
+                $"Wręcz łapówkę ({bribe} rubli)",
+                () =>
+                {
+                    if (_resourceManager.TrySpend(costMoney: bribe))
+                        _riskManager.ReduceRisk(20);
+                    else
+                        _riskManager.AddRisk(15);
+                }
+            ),
+            // Let them search: nothing found today, but the raid rattles the cell and draws eyes.
+            new DialogueSystem.Choice(
+                "Poddaj się rewizji",
+                () =>
+                {
+                    _riskManager.AddRisk(10);
+                    _resourceManager.AddTrust(-3);
+                }
+            ),
+        };
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Ochrana wpada na pełną rewizję!",
             choices,
             _dialogueSystem.GetPortraitSprite("ochrana")
         );
@@ -442,7 +478,23 @@ public class EventHandler : MonoBehaviour
     // 7. Stresujące
     private void HandleLoudNoise()
     {
-        _dialogueSystem.ShowDialogue("Głośny hałas! Szybko schowaj podejrzane przedmioty!");
+        var choices = new DialogueSystem.Choice[]
+        {
+            // Scramble to stash the press and leaflets — exposure drops.
+            new DialogueSystem.Choice(
+                "Błyskawicznie chowaj sprzęt",
+                () => _riskManager.ReduceRisk(8)
+            ),
+            // Freeze and hope no one looks in — the gear stays in plain sight.
+            new DialogueSystem.Choice(
+                "Udawaj, że nic się nie stało",
+                () => _riskManager.AddRisk(10)
+            ),
+        };
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Głośny hałas na klatce! Ktoś może zaraz zajrzeć.",
+            choices
+        );
     }
 
     private void HandleFireCandle()

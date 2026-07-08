@@ -13,6 +13,7 @@ public enum GameEventId
     KnockAtDoor,
     NeighborPeeking,
     OchranaStepsHeard,
+    OchranaRaid,
 
     // 2. Zasoby
     OutOfInk,

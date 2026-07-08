@@ -23,6 +23,7 @@ public static class GameEvents
     public static event Action OnNeighborDismissed;
 
     public static event Action OnOchranaStepsHeard;
+    public static event Action OnOchranaRaid;
 
     public static event Action<int> OnOfficerInspectionStarted;
     public static event Action OnOfficerInspectionSuccessful;
@@ -85,6 +86,8 @@ public static class GameEvents
     public static void NeighborDismissed() => OnNeighborDismissed?.Invoke();
 
     public static void OchranaStepsHeard() => OnOchranaStepsHeard?.Invoke();
+
+    public static void OchranaRaid() => OnOchranaRaid?.Invoke();
 
     public static void OfficerInspectionStarted(int itemsToHide) =>
         OnOfficerInspectionStarted?.Invoke(itemsToHide);

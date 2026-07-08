@@ -23,6 +23,13 @@ public static class GameEventPool
                 weight: 5,
                 minRiskLevel: RiskLevel.Medium
             ),
+            // A full search — a serious, high-heat beat gated to later days and elevated risk.
+            new GameEventDefinition(
+                GameEventId.OchranaRaid,
+                weight: 3,
+                minDay: 2,
+                minRiskLevel: RiskLevel.Medium
+            ),
             // 2. Zasoby
             new GameEventDefinition(GameEventId.OutOfInk, weight: 6),
             new GameEventDefinition(GameEventId.LostPaperBatch, weight: 5),
