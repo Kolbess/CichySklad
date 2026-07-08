@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -84,6 +85,12 @@ public class DayCycle : MonoBehaviour
     private bool _eventB;
     private bool _gameOver;
 
+    // Daily roll tables. Each entry is one reachable outcome; the table's length IS the roll's
+    // exclusive upper bound, so no case can be stranded by an off-by-one range literal. Built in
+    // Awake so the windfall entries can close over the injected ResourceManager.
+    private Action[] _narrativeEvents;
+    private Action[] _dailyWindfalls;
+
     public bool IsGameOver => _gameOver;
 
     private void OnValidate()
@@ -109,6 +116,24 @@ public class DayCycle : MonoBehaviour
         Assert.IsNotNull(_dayImage, $"[{nameof(DayCycle)}] Day image unassigned on {name}!");
         Assert.IsNotNull(_dayScreen, $"[{nameof(DayCycle)}] Day screen unassigned on {name}!");
         Assert.IsNotNull(_dayText, $"[{nameof(DayCycle)}] Day text unassigned on {name}!");
+
+        // One entry per outcome. Adding an outcome here automatically widens the roll (see
+        // GetRandomEvent / GetRandomEventB) — there is no separate range literal to keep in sync.
+        _narrativeEvents = new Action[]
+        {
+            GameEvents.CourierInjured,
+            GameEvents.KnockAtDoor,
+            GameEvents.NeighborPeeking,
+        };
+
+        _dailyWindfalls = new Action[]
+        {
+            () => _resourceManager.AddMoney(3),
+            () => _resourceManager.AddPaper(3),
+            () => _resourceManager.AddInk(3),
+            () => _resourceManager.AddLeaflets(3),
+            () => _resourceManager.AddTrust(10),
+        };
     }
 
     private void Start()
@@ -209,41 +234,15 @@ public class DayCycle : MonoBehaviour
     private void GetRandomEvent()
     {
         _eventA = true;
-        switch (Random.Range(1, 3))
-        {
-            case 1:
-                GameEvents.CourierInjured();
-                break;
-            case 2:
-                GameEvents.KnockAtDoor();
-                break;
-            case 3:
-                GameEvents.NeighborPeeking();
-                break;
-        }
+        int roll = Random.Range(0, RandomEventTable.RollBound(_narrativeEvents));
+        RandomEventTable.Select(_narrativeEvents, roll).Invoke();
     }
 
     private void GetRandomEventB()
     {
         _eventB = true;
-        switch (Random.Range(1, 5))
-        {
-            case 1:
-                _resourceManager.AddMoney(3);
-                break;
-            case 2:
-                _resourceManager.AddPaper(3);
-                break;
-            case 3:
-                _resourceManager.AddInk(3);
-                break;
-            case 4:
-                _resourceManager.AddLeaflets(3);
-                break;
-            case 5:
-                _resourceManager.AddTrust(10);
-                break;
-        }
+        int roll = Random.Range(0, RandomEventTable.RollBound(_dailyWindfalls));
+        RandomEventTable.Select(_dailyWindfalls, roll).Invoke();
     }
 
     private void StartDay()
