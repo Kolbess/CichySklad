@@ -170,6 +170,15 @@ public abstract class PlayModeTestBase
         return dialogue;
     }
 
+    /// <summary>Wires an <see cref="EventScheduler"/> against an existing resource source.</summary>
+    protected EventScheduler BuildEventScheduler(ResourceManager resources)
+    {
+        EventScheduler scheduler = AddInactive<EventScheduler>(out _, "EventScheduler");
+        SetField(scheduler, "_resourceManager", resources);
+        Activate(scheduler);
+        return scheduler;
+    }
+
     /// <summary>Wires an <see cref="InspectionSystem"/> plus its mutually-referencing
     /// <see cref="Npc"/> against an existing <paramref name="risk"/> source.</summary>
     protected InspectionSystem BuildInspection(RiskManager risk, out Npc npc)

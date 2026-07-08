@@ -16,9 +16,11 @@ public class DayCyclePlayTests : PlayModeTestBase
         for (int i = 0; i < 6; i++)
             sprites.Add(NewSprite());
 
+        ResourceManager resources = BuildResourceManager();
         SetField(day, "_riskManager", BuildRiskManager());
-        SetField(day, "_resourceManager", BuildResourceManager());
+        SetField(day, "_resourceManager", resources);
         SetField(day, "_dialogueSystem", BuildDialogue(out _, out _));
+        SetField(day, "_eventScheduler", BuildEventScheduler(resources));
         SetField(day, "_daySprites", sprites);
         SetField(day, "_dayImage", NewImage());
         SetField(day, "_dayScreen", NewGo("DayScreen"));

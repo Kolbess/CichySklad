@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -30,6 +29,10 @@ public class DayCycle : MonoBehaviour
     [FormerlySerializedAs("dialogueSystem")]
     [SerializeField]
     private DialogueSystem _dialogueSystem;
+
+    [Tooltip("Selects and fires the daily narrative event and resource windfall. Required.")]
+    [SerializeField]
+    private EventScheduler _eventScheduler;
 
     [Header("Timing")]
     [Tooltip("Real seconds a full in-game day lasts. Must be > 0.")]
@@ -85,12 +88,6 @@ public class DayCycle : MonoBehaviour
     private bool _eventB;
     private bool _gameOver;
 
-    // Daily roll tables. Each entry is one reachable outcome; the table's length IS the roll's
-    // exclusive upper bound, so no case can be stranded by an off-by-one range literal. Built in
-    // Awake so the windfall entries can close over the injected ResourceManager.
-    private Action[] _narrativeEvents;
-    private Action[] _dailyWindfalls;
-
     public bool IsGameOver => _gameOver;
 
     private void OnValidate()
@@ -116,24 +113,10 @@ public class DayCycle : MonoBehaviour
         Assert.IsNotNull(_dayImage, $"[{nameof(DayCycle)}] Day image unassigned on {name}!");
         Assert.IsNotNull(_dayScreen, $"[{nameof(DayCycle)}] Day screen unassigned on {name}!");
         Assert.IsNotNull(_dayText, $"[{nameof(DayCycle)}] Day text unassigned on {name}!");
-
-        // One entry per outcome. Adding an outcome here automatically widens the roll (see
-        // GetRandomEvent / GetRandomEventB) — there is no separate range literal to keep in sync.
-        _narrativeEvents = new Action[]
-        {
-            GameEvents.CourierInjured,
-            GameEvents.KnockAtDoor,
-            GameEvents.NeighborPeeking,
-        };
-
-        _dailyWindfalls = new Action[]
-        {
-            () => _resourceManager.AddMoney(3),
-            () => _resourceManager.AddPaper(3),
-            () => _resourceManager.AddInk(3),
-            () => _resourceManager.AddLeaflets(3),
-            () => _resourceManager.AddTrust(10),
-        };
+        Assert.IsNotNull(
+            _eventScheduler,
+            $"[{nameof(DayCycle)}] EventScheduler unassigned on {name}!"
+        );
     }
 
     private void Start()
@@ -176,7 +159,10 @@ public class DayCycle : MonoBehaviour
         else if (segment < 2f)
         {
             if (!_eventA)
-                GetRandomEvent();
+            {
+                _eventA = true;
+                _eventScheduler.TryScheduleDailyEvent(_currentDay, _riskManager.CurrentRiskLevel);
+            }
             _dayImage.sprite = _daySprites[1];
         }
         else if (segment < 3f)
@@ -184,7 +170,8 @@ public class DayCycle : MonoBehaviour
             if (!_eventB)
             {
                 _eventA = false;
-                GetRandomEventB();
+                _eventB = true;
+                _eventScheduler.GrantDailyWindfall();
             }
             _dayImage.sprite = _daySprites[2];
         }
@@ -229,20 +216,6 @@ public class DayCycle : MonoBehaviour
         // Loss is presented by DeathManager (listens to the same event); here we only stop the
         // day loop so days do not keep advancing behind the death screen.
         _gameOver = true;
-    }
-
-    private void GetRandomEvent()
-    {
-        _eventA = true;
-        int roll = Random.Range(0, RandomEventTable.RollBound(_narrativeEvents));
-        RandomEventTable.Select(_narrativeEvents, roll).Invoke();
-    }
-
-    private void GetRandomEventB()
-    {
-        _eventB = true;
-        int roll = Random.Range(0, RandomEventTable.RollBound(_dailyWindfalls));
-        RandomEventTable.Select(_dailyWindfalls, roll).Invoke();
     }
 
     private void StartDay()
