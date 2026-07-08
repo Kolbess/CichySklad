@@ -188,10 +188,16 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Pause actions", GameEvents.OchranaPauseAccepted),
-            new DialogueSystem.Choice("Continue working", GameEvents.OchranaPauseDeclined),
+            // Lay low: printing stops, so accumulated suspicion cools off.
+            new DialogueSystem.Choice("Przerwij pracę", () => _riskManager.ReduceRisk(10)),
+            // Keep printing while they are right outside — reckless, spikes risk.
+            new DialogueSystem.Choice("Pracuj dalej", () => _riskManager.AddRisk(12)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("You hear Ochrana's footsteps outside.", choices);
+        _dialogueSystem.ShowDialogueWithChoices(
+            "Słyszysz kroki Ochrany za drzwiami.",
+            choices,
+            _dialogueSystem.GetPortraitSprite("ochrana")
+        );
     }
 
     private void HandleOfficerInspectionStarted(int itemsToHide)
@@ -205,40 +211,73 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Use remaining ink", GameEvents.OutOfInkUseNow),
-            new DialogueSystem.Choice("Save it", GameEvents.OutOfInkSave),
+            // Burn the last drops on one final print run.
+            new DialogueSystem.Choice("Zużyj resztki tuszu", () => _resourceManager.AddLeaflets(2)),
+            // Stretch the supply — a little ink kept in reserve.
+            new DialogueSystem.Choice("Oszczędzaj tusz", () => _resourceManager.AddInk(1)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("You're out of ink!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Skończył ci się tusz!", choices);
     }
 
     private void HandleLostPaper()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Pay informer", GameEvents.LostPaperPayInformer),
-            new DialogueSystem.Choice("Ignore", GameEvents.LostPaperIgnore),
+            // Buy the batch back — costs money, otherwise the loss draws suspicion.
+            new DialogueSystem.Choice(
+                "Zapłać donosicielowi (3 ruble)",
+                () =>
+                {
+                    if (_resourceManager.TrySpend(costMoney: 3))
+                        _resourceManager.AddPaper(3);
+                    else
+                        _riskManager.AddRisk(10);
+                }
+            ),
+            new DialogueSystem.Choice("Odpuść", () => _riskManager.AddRisk(5)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("A paper batch was lost!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Przepadła partia papieru!", choices);
     }
 
     private void HandleMoistureDamage()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Throw damaged paper", GameEvents.MoistureThrow),
-            new DialogueSystem.Choice("Use risky paper", GameEvents.MoistureRisk),
+            // Bin the ruined sheet — safe, but a unit of paper is gone.
+            new DialogueSystem.Choice(
+                "Wyrzuć zniszczony papier",
+                () => _resourceManager.TrySpend(costPaper: 1)
+            ),
+            // Print on damp paper anyway: leaflets now, but smudged output is risky.
+            new DialogueSystem.Choice(
+                "Użyj wilgotnego papieru",
+                () =>
+                {
+                    _resourceManager.AddLeaflets(2);
+                    _riskManager.AddRisk(8);
+                }
+            ),
         };
-        _dialogueSystem.ShowDialogueWithChoices("Some paper got wet.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Część papieru zawilgła.", choices);
     }
 
     private void HandleSecretDonation()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Take donation", GameEvents.SecretDonationTake),
-            new DialogueSystem.Choice("Leave it", GameEvents.SecretDonationLeave),
+            // Pocket the cash, but an unknown benefactor could be a trap.
+            new DialogueSystem.Choice(
+                "Weź datek",
+                () =>
+                {
+                    _resourceManager.AddMoney(5);
+                    _riskManager.AddRisk(8);
+                }
+            ),
+            // Refuse it — cautious, and the network respects the restraint.
+            new DialogueSystem.Choice("Zostaw", () => _resourceManager.AddTrust(5)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("A secret donation appears!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Pojawił się tajny datek!", choices);
     }
 
     // =======================
@@ -247,21 +286,34 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Bribe neighbor", GameEvents.NeighborBribe),
-            new DialogueSystem.Choice("Do nothing", () => _resourceManager.AddTrust(-5)),
+            // Buy silence — costs money, otherwise the neighbour talks and risk climbs.
+            new DialogueSystem.Choice(
+                "Przekup sąsiada (3 ruble)",
+                () =>
+                {
+                    if (_resourceManager.TrySpend(costMoney: 3))
+                        _riskManager.ReduceRisk(10);
+                    else
+                        _riskManager.AddRisk(10);
+                }
+            ),
+            new DialogueSystem.Choice("Nic nie rób", () => _resourceManager.AddTrust(-5)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("Neighbor saw the courier!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Sąsiad widział kuriera!", choices);
     }
 
     private void HandleInformerAsks()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Lie", GameEvents.InformerLie),
-            new DialogueSystem.Choice("Dismiss", GameEvents.InformerDismiss),
-            new DialogueSystem.Choice("Ignore", GameEvents.InformerIgnore),
+            // A convincing lie deflects the immediate suspicion.
+            new DialogueSystem.Choice("Skłam", () => _riskManager.ReduceRisk(5)),
+            // Send him off curtly — a rebuff that still draws some attention.
+            new DialogueSystem.Choice("Odpraw go", () => _riskManager.AddRisk(5)),
+            // Say nothing at all — silence reads as guilt and stokes suspicion most.
+            new DialogueSystem.Choice("Zignoruj", () => _riskManager.AddRisk(8)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("Informer is asking about your work.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Donosiciel wypytuje o twoją pracę.", choices);
     }
 
     private void HandleRumorsSpread()
@@ -309,10 +361,20 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Open package", GameEvents.PackageOpen),
-            new DialogueSystem.Choice("Wait", GameEvents.PackageWait),
+            // Open it now: useful supplies, but handling unknown contents is exposure.
+            new DialogueSystem.Choice(
+                "Otwórz paczkę",
+                () =>
+                {
+                    _resourceManager.AddPaper(2);
+                    _resourceManager.AddInk(1);
+                    _riskManager.AddRisk(5);
+                }
+            ),
+            // Hold off until it's safe — patience lowers the heat.
+            new DialogueSystem.Choice("Poczekaj", () => _riskManager.ReduceRisk(5)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("Package contents are uncertain.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Zawartość paczki jest niepewna.", choices);
     }
 
     // =======================
@@ -321,20 +383,33 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Risk it", GameEvents.StuckRisk),
-            new DialogueSystem.Choice("Ignore", GameEvents.StuckIgnore),
+            // Force it open — the noise is a big risk spike.
+            new DialogueSystem.Choice("Szarp na siłę", () => _riskManager.AddRisk(10)),
+            // Leave it jammed — contraband stays poorly hidden, a smaller lingering risk.
+            new DialogueSystem.Choice("Zostaw zacięty schowek", () => _riskManager.AddRisk(4)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("Hiding spot is stuck!", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Schowek się zaciął!", choices);
     }
 
     private void HandleStrangerNeedsHelp()
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Give resources", GameEvents.StrangerGiveResources),
-            new DialogueSystem.Choice("Dismiss", GameEvents.StrangerDismiss),
+            // Share what you can spare: earns trust, or draws attention if you're broke.
+            new DialogueSystem.Choice(
+                "Podziel się zasobami (2 ruble)",
+                () =>
+                {
+                    if (_resourceManager.TrySpend(costMoney: 2))
+                        _resourceManager.AddTrust(8);
+                    else
+                        _riskManager.AddRisk(5);
+                }
+            ),
+            // Turn them away — safe, but word of the cold shoulder costs standing.
+            new DialogueSystem.Choice("Odpraw nieznajomego", () => _resourceManager.AddTrust(-5)),
         };
-        _dialogueSystem.ShowDialogueWithChoices("A stranger asks for help.", choices);
+        _dialogueSystem.ShowDialogueWithChoices("Nieznajomy prosi o pomoc.", choices);
     }
 
     private void HandleLampExplosion()
@@ -426,13 +501,21 @@ public class EventHandler : MonoBehaviour
     {
         var choices = new DialogueSystem.Choice[]
         {
-            new DialogueSystem.Choice("Invest in cheaper paper", GameEvents.BuyPaperOffer),
-            new DialogueSystem.Choice("Ignore offer", () => { }),
+            // A bargain if you can pay; if you can't, the dealer's grumbling raises your profile.
+            new DialogueSystem.Choice(
+                "Zainwestuj w tańszy papier (4 ruble)",
+                () =>
+                {
+                    if (_resourceManager.TrySpend(costMoney: 4))
+                        _resourceManager.AddPaper(6);
+                    else
+                        _riskManager.AddRisk(3);
+                }
+            ),
+            // Walking away from a shady contact keeps you discreet — a small trust gain.
+            new DialogueSystem.Choice("Odrzuć ofertę", () => _resourceManager.AddTrust(2)),
         };
-        _dialogueSystem.ShowDialogueWithChoices(
-            "Opportunity to buy cheaper paper. Choose wisely.",
-            choices
-        );
+        _dialogueSystem.ShowDialogueWithChoices("Okazja: tańszy papier. Wybierz mądrze.", choices);
     }
 
     private void HandleArrest()
