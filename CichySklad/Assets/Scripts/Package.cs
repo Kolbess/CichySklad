@@ -43,6 +43,9 @@ public class Package : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // A spend may have destroyed a bundled item straight out of the list; drop the stale nulls.
+        _items.RemoveAll(item => item == null);
+
         // An empty package has nothing left to give — remove it from the scene.
         if (_items.Count == 0)
         {

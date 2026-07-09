@@ -113,7 +113,24 @@ public class ResourceManager : MonoBehaviour
     private static readonly int NoResource = Animator.StringToHash("NoResource");
 
     private readonly ResourceLedger _ledger = new ResourceLedger();
-    private readonly List<Package> _packages = new List<Package>();
+
+    // Every spawned physical item, per type, wherever it currently lives (in a package, loose in the
+    // scene, or stashed in a HidingSpot). A spend destroys from here so nothing is left behind as a
+    // "ghost" when the object has been dragged out of its original package.
+    private readonly Dictionary<ResourceType, List<GameObject>> _liveItems = new Dictionary<
+        ResourceType,
+        List<GameObject>
+    >
+    {
+        { ResourceType.Paper, new List<GameObject>() },
+        { ResourceType.Ink, new List<GameObject>() },
+        { ResourceType.Leaflets, new List<GameObject>() },
+        { ResourceType.Money, new List<GameObject>() },
+    };
+
+    // Set while reconciling the ledger to items a caller already destroyed itself (NotifyConsumed),
+    // so the change handler updates the counter text without destroying yet more items.
+    private bool _reconciling;
 
     private Animator _paperAnimator;
     private Animator _inkAnimator;
@@ -200,6 +217,34 @@ public class ResourceManager : MonoBehaviour
         int costMoney = 0
     ) => _ledger.TrySpend(costPaper, costInk, costLeaflets, costMoney);
 
+    /// <summary>
+    /// Live count of spawned physical items of a resource, wherever they are (in a package, loose in
+    /// the scene, or stashed in a hiding spot). Stays in sync with the ledger after spends.
+    /// </summary>
+    public int LiveItemCount(ResourceType type)
+    {
+        if (!_liveItems.TryGetValue(type, out List<GameObject> items))
+            return 0;
+        items.RemoveAll(item => item == null);
+        return items.Count;
+    }
+
+    /// <summary>
+    /// Decrements the ledger to account for physical items a station has ALREADY destroyed itself
+    /// (e.g. the printer consuming its loaded paper/ink). Unlike <see cref="TrySpend"/>, this does not
+    /// destroy any further items — the caller owns exactly the objects it consumed, so this only keeps
+    /// the counter honest without double-spending.
+    /// </summary>
+    public void NotifyConsumed(ResourceType type, int count)
+    {
+        if (count <= 0)
+            return;
+
+        _reconciling = true;
+        AdjustLedger(type, -count);
+        _reconciling = false;
+    }
+
     private void HandleResourceChanged(ResourceType type, int previous, int current)
     {
         if (type == ResourceType.Trust)
@@ -209,11 +254,15 @@ public class ResourceManager : MonoBehaviour
         }
 
         int delta = current - previous;
-        GameObject prefab = PrefabFor(type);
-        if (delta > 0)
-            SpawnResource(prefab, delta);
-        else if (delta < 0)
-            DestroyResource(prefab, -delta);
+        // During a reconcile the caller has already destroyed the physical items, so only refresh
+        // the counter — spawning/destroying here would double-handle them.
+        if (!_reconciling)
+        {
+            if (delta > 0)
+                SpawnResource(type, delta);
+            else if (delta < 0)
+                DestroyResource(type, -delta);
+        }
 
         UpdateCounterText(type, current);
     }
@@ -225,8 +274,13 @@ public class ResourceManager : MonoBehaviour
             animator.SetTrigger(NoResource);
     }
 
-    private void SpawnResource(GameObject prefab, int amount)
+    private void SpawnResource(ResourceType type, int amount)
     {
+        GameObject prefab = PrefabFor(type);
+        if (prefab == null)
+            return;
+
+        List<GameObject> live = _liveItems[type];
         int spawned = 0;
         while (spawned < amount)
         {
@@ -236,8 +290,6 @@ public class ResourceManager : MonoBehaviour
                 Quaternion.identity
             );
             var package = packageGo.GetComponent<Package>();
-            if (package != null)
-                _packages.Add(package);
 
             int remaining = amount - spawned;
             int count = Mathf.Min(_itemsPerPackage, remaining);
@@ -254,35 +306,50 @@ public class ResourceManager : MonoBehaviour
                     Quaternion.identity
                 );
                 package?.AddItem(item);
+                live.Add(item);
             }
 
             spawned += count;
         }
     }
 
-    private void DestroyResource(GameObject prefab, int amount)
+    private void DestroyResource(ResourceType type, int amount)
     {
-        int toRemove = amount;
+        if (!_liveItems.TryGetValue(type, out List<GameObject> items))
+            return;
 
-        for (int i = _packages.Count - 1; i >= 0 && toRemove > 0; i--)
+        int removed = 0;
+        // Newest-first so freshly spawned items are consumed before older ones. Destroying reaches
+        // items wherever they sit — a HidingSpot object frees its spot via InteractableObject.OnDestroy,
+        // and a bundled item leaves a null the owning Package prunes on its next click.
+        for (int i = items.Count - 1; i >= 0 && removed < amount; i--)
         {
-            Package package = _packages[i];
-            if (package == null)
-            {
-                _packages.RemoveAt(i);
-                continue;
-            }
+            GameObject item = items[i];
+            items.RemoveAt(i);
+            if (item == null)
+                continue; // already destroyed elsewhere; just drop the stale entry
 
-            List<GameObject> items = package.Items;
-            for (int j = items.Count - 1; j >= 0 && toRemove > 0; j--)
-            {
-                if (items[j].name.Contains(prefab.name))
-                {
-                    Destroy(items[j]);
-                    items.RemoveAt(j);
-                    toRemove--;
-                }
-            }
+            Destroy(item);
+            removed++;
+        }
+    }
+
+    private void AdjustLedger(ResourceType type, int delta)
+    {
+        switch (type)
+        {
+            case ResourceType.Paper:
+                _ledger.Paper += delta;
+                break;
+            case ResourceType.Ink:
+                _ledger.Ink += delta;
+                break;
+            case ResourceType.Leaflets:
+                _ledger.Leaflets += delta;
+                break;
+            case ResourceType.Money:
+                _ledger.Money += delta;
+                break;
         }
     }
 

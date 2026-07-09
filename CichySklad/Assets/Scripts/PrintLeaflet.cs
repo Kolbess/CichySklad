@@ -8,15 +8,14 @@ using UnityEngine.UI;
 /// <summary>
 /// A printing station driven by a physical material-flow loop. The player drags a paper object and
 /// an ink object onto the station (detected via a trigger, the same way <see cref="HidingSpot"/>
-/// swallows dropped objects), then presses Start. Printing spends the resources, runs for
-/// <c>_printDuration</c> with a visible progress bar, mints a leaflet, then cools down for a shorter
-/// <c>_cooldownDuration</c> before it will accept a new load. The pure <see cref="PrinterCycle"/>
-/// owns the state/timing; this component owns the scene wiring, the loaded objects, and the spend.
+/// swallows dropped objects), then presses Start. Printing consumes exactly the one paper and one
+/// ink that were loaded, runs for <c>_printDuration</c> with a visible progress bar, mints a leaflet,
+/// then cools down for a shorter <c>_cooldownDuration</c> before it will accept a new load. The pure
+/// <see cref="PrinterCycle"/> owns the state/timing; this component owns the scene wiring.
 ///
-/// Consumption is deliberately twofold: the loaded paper/ink GameObjects are destroyed (the visible
-/// "materials disappeared" feedback) and <see cref="ResourceManager.TrySpend"/> debits the ledger
-/// counters. If a scene wires the loaded objects to be the very same units the ledger tracks, set
-/// the costs so the two don't double-count.
+/// Consumption is single-sourced: the loaded paper/ink GameObjects are destroyed AND the ledger is
+/// told about exactly those via <see cref="ResourceManager.NotifyConsumed"/> — never a separate
+/// <c>TrySpend</c>, so a spend can never destroy a second, unrelated material as a side effect.
 /// </summary>
 public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -46,17 +45,6 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     [FormerlySerializedAs("cooldownDuration")]
     [SerializeField]
     private float _cooldownDuration = 2f;
-
-    [Header("Costs")]
-    [Tooltip("Ink consumed per printed leaflet. Spent when Start is pressed.")]
-    [FormerlySerializedAs("costInk")]
-    [SerializeField]
-    private int _costInk = 1;
-
-    [Tooltip("Paper consumed per printed leaflet. Spent when Start is pressed.")]
-    [FormerlySerializedAs("costPaper")]
-    [SerializeField]
-    private int _costPaper = 1;
 
     [Header("Load Points (optional)")]
     [Tooltip(
@@ -94,10 +82,6 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                     + $"clamped to {_cooldownDuration:0.##}s on {name}."
             );
         }
-        if (_costInk < 0)
-            _costInk = 0;
-        if (_costPaper < 0)
-            _costPaper = 0;
     }
 
     private void Awake()
@@ -192,20 +176,14 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     /// <summary>
     /// The Start action — wire it to a UI Button or let the station's own click trigger it. Blocks
-    /// with a message when materials are missing or the ledger can't cover the cost; otherwise
-    /// spends the resources, destroys the loaded objects, and begins the print phase.
+    /// with a message when the pair of materials is missing; otherwise consumes exactly the loaded
+    /// paper and ink (destroying them and debiting the ledger) and begins the print phase.
     /// </summary>
     public void StartPrint()
     {
         if (!_cycle.CanStart)
         {
             ShowMessage("Załaduj papier i tusz!");
-            return;
-        }
-
-        if (!_resourceManager.TrySpend(costPaper: _costPaper, costInk: _costInk))
-        {
-            ShowMessage("Brak materiałów!");
             return;
         }
 
@@ -263,17 +241,25 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     private void ConsumeLoadedMaterials()
     {
+        // Destroy exactly what was loaded and tell the ledger about precisely those units. Using
+        // NotifyConsumed (not TrySpend) means the ledger never destroys a second, unrelated material.
         if (_loadedPaper != null)
+        {
             Destroy(_loadedPaper.gameObject);
+            _resourceManager.NotifyConsumed(ResourceType.Paper, 1);
+        }
         if (_loadedInk != null)
+        {
             Destroy(_loadedInk.gameObject);
+            _resourceManager.NotifyConsumed(ResourceType.Ink, 1);
+        }
         _loadedPaper = null;
         _loadedInk = null;
     }
 
     private void ShowCost()
     {
-        _costText.text = $"Tusz: {_costInk}, Papier: {_costPaper}";
+        _costText.text = "Koszt: 1 papier + 1 tusz";
         _costText.gameObject.SetActive(true);
     }
 

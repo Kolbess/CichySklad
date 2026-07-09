@@ -40,17 +40,18 @@ Otwórz obiekt drukarki na scenie. Komponent `Print Leaflet` ma teraz nowe sekcj
 **UI Elements**
 - `Progress Slider` → slider paska postępu (0..1). Pokazuje najpierw druk, potem stygnięcie.
   *(wymagane; jeśli miałeś podpięty stary „cooldown slider”, przemapuje się sam)*
-- `Cost Text` → `TextMeshProUGUI` pokazujący koszt na hover oraz komunikaty
-  („Załaduj papier i tusz!”, „Brak materiałów!”). *(wymagane)*
+- `Cost Text` → `TextMeshProUGUI` pokazujący koszt na hover oraz komunikat
+  („Załaduj papier i tusz!”). *(wymagane)*
 
 **Timing**
 - `Print Duration` — sekundy druku (domyślnie `6`).
 - `Cooldown Duration` — sekundy stygnięcia (domyślnie `2`). **Musi być krótsze niż druk** —
   `OnValidate` przytnie i ostrzeże, jeśli ustawisz >= druku.
 
-**Costs**
-- `Cost Ink` (domyślnie `1`), `Cost Paper` (domyślnie `1`) — pobierane z `ResourceManager` w
-  momencie naciśnięcia Start.
+**Koszt (stały)**
+- Druk zużywa dokładnie **1 papier + 1 tusz** — te, które załadowano. Nie ma pól kosztu: drukarka
+  niszczy załadowane obiekty i zgłasza je do `ResourceManager.NotifyConsumed`, więc licznik spada
+  o dokładnie tyle, ile zniknęło (bez podwójnego zużycia).
 
 **Load Points (optional)**
 - `Paper Slot`, `Ink Slot` — `Transform`y, pod które załadowany obiekt zostaje **podpięty jako
@@ -107,12 +108,12 @@ w przeciwnym razie pokaże komunikat i nic nie zużyje.
 
 ---
 
-## ⚠️ Uwaga o podwójnym zużyciu
+## Zużycie (bez podwójnego liczenia)
 
-Zużycie jest celowo dwutorowe: załadowane obiekty są **niszczone** (widoczny efekt „materiały
-zniknęły”) **oraz** `ResourceManager.TrySpend` zdejmuje z liczników. Jeśli w Twojej scenie
-załadowane obiekty to **te same jednostki**, które śledzi licznik, ustaw `Cost Ink`/`Cost Paper`
-tak, aby nie liczyć ich dwa razy (np. koszt `0`, jeśli fizyczny obiekt jest jedyną „walutą”).
+Zużycie jest jednoźródłowe: załadowane obiekty są **niszczone**, a drukarka zgłasza dokładnie te
+jednostki przez `ResourceManager.NotifyConsumed`. Nie ma osobnego `TrySpend`, więc spienięży się
+wyłącznie to, co faktycznie zniknęło — żaden inny papier/tusz (luzem czy w kryjówce) nie jest
+przy okazji kasowany.
 
 ---
 
