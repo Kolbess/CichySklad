@@ -95,7 +95,7 @@ public class ResourceManager : MonoBehaviour
     [Tooltip("Maximum resource items bundled into a single package. Must be >= 1.")]
     [FormerlySerializedAs("itemsPerPackage")]
     [SerializeField]
-    private int _itemsPerPackage = 3;
+    private int _itemsPerPackage = 2;
 
     [Header("Starting Resources")]
     [Tooltip("Paper granted at the start of a run.")]

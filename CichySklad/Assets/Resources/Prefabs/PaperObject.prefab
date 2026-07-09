@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5472348012118619352}
   - component: {fileID: 3587759519480107143}
   - component: {fileID: 8231839534059413355}
+  - component: {fileID: -4464768085213689808}
   m_Layer: 0
   m_Name: PaperObject
   m_TagString: InteractableObject
@@ -39,6 +40,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &9035597554674445076
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -57,6 +59,8 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -78,9 +82,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 65150fdbe5e2dd846b587e37b4b5b6f8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -90,7 +96,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &4113095386974695627
 MonoBehaviour:
@@ -104,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67b04d2d51f3de4419c7baaf54c13ce6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hidingSpot: {fileID: 0}
+  _pickupRisk: 10
 --- !u!114 &7072008089230808076
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,7 +122,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e71a689df392c4c4d8e31a5279fa72b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  riskValue: 5
+  _riskValue: 1
 --- !u!82 &5472348012118619352
 AudioSource:
   m_ObjectHideFlags: 0
@@ -128,7 +133,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 75343b4ccd14d594c9023f56a7d5fc9b, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 75343b4ccd14d594c9023f56a7d5fc9b, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -278,3 +283,16 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!114 &-4464768085213689808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7596242861837396058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60e2ece982bc41c8ba9a9a407eae2183, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CichySklad.Runtime::PrinterMaterial
+  _type: 0
