@@ -99,8 +99,8 @@ public class PrintLeafletPlayTests : PlayModeTestBase
 
         station.StartPrint();
         Assert.AreEqual(PrinterState.Printing, station.State);
-        Assert.AreEqual(0, rm.Paper, "Default paper cost 2 is spent at start.");
-        Assert.AreEqual(1, rm.Ink, "Default ink cost 1 is spent at start.");
+        Assert.AreEqual(1, rm.Paper, "Default paper cost 1 is spent at start (2 - 1).");
+        Assert.AreEqual(1, rm.Ink, "Default ink cost 1 is spent at start (2 - 1).");
         Assert.AreEqual(0, rm.Leaflets, "No leaflet until the print phase completes.");
 
         yield return WaitForState(station, PrinterState.CoolingDown);

@@ -49,12 +49,14 @@ Otwórz obiekt drukarki na scenie. Komponent `Print Leaflet` ma teraz nowe sekcj
   `OnValidate` przytnie i ostrzeże, jeśli ustawisz >= druku.
 
 **Costs**
-- `Cost Ink` (domyślnie `1`), `Cost Paper` (domyślnie `2`) — pobierane z `ResourceManager` w
+- `Cost Ink` (domyślnie `1`), `Cost Paper` (domyślnie `1`) — pobierane z `ResourceManager` w
   momencie naciśnięcia Start.
 
 **Load Points (optional)**
-- `Paper Slot`, `Ink Slot` — puste `Transform`y, do których „przyklei się” załadowany obiekt.
-  Opcjonalne; gdy puste, materiał ląduje na pozycji drukarki.
+- `Paper Slot`, `Ink Slot` — `Transform`y, pod które załadowany obiekt zostaje **podpięty jako
+  dziecko** (`localPosition = 0`, `localScale = 1`), więc przejmuje pozycję i **skalę** slotu.
+  Ustaw skalę slotu tak, jak ma wyglądać materiał w drukarce. Opcjonalne; gdy puste, materiał
+  ląduje po prostu na pozycji drukarki (bez zmiany skali).
 
 ---
 
@@ -67,8 +69,9 @@ Każdy przeciągany obiekt papieru/tuszu, który ma wpadać do drukarki, potrzeb
 3. Upewnij się, że obiekt ma **Collider2D** (`PrinterMaterial` tego wymaga) oraz **Rigidbody2D**
    (dla triggerów, patrz 1a) i mechanizm przeciągania, którego już używasz (`InteractableObject`).
 
-> Gdy materiał zostanie załadowany, jego `InteractableObject` jest wyłączany (nie da się go
-> wyciągnąć z powrotem), a przy starcie druku obiekt jest **niszczony** — to widoczne zużycie.
+> Gdy materiał zostanie załadowany, jego `InteractableObject` oraz **wszystkie Collider2D** są
+> wyłączane — nie da się go już kliknąć ani wyciągnąć z powrotem (sprite zostaje widoczny). Przy
+> starcie druku obiekt jest **niszczony** — to widoczne zużycie.
 
 ---
 

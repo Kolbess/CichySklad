@@ -56,14 +56,20 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     [Tooltip("Paper consumed per printed leaflet. Spent when Start is pressed.")]
     [FormerlySerializedAs("costPaper")]
     [SerializeField]
-    private int _costPaper = 2;
+    private int _costPaper = 1;
 
     [Header("Load Points (optional)")]
-    [Tooltip("World point a loaded paper object snaps to. Optional; falls back to this transform.")]
+    [Tooltip(
+        "Parent for a loaded paper object; it nests here and takes this slot's position and scale. "
+            + "Optional; falls back to the printer's own position."
+    )]
     [SerializeField]
     private Transform _paperSlot;
 
-    [Tooltip("World point a loaded ink object snaps to. Optional; falls back to this transform.")]
+    [Tooltip(
+        "Parent for a loaded ink object; it nests here and takes this slot's position and scale. "
+            + "Optional; falls back to the printer's own position."
+    )]
     [SerializeField]
     private Transform _inkSlot;
 
@@ -230,12 +236,29 @@ public class PrintLeaflet : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     private void ParkMaterial(PrinterMaterial material, Transform slot)
     {
-        Transform anchor = slot != null ? slot : transform;
-        material.transform.position = anchor.position;
+        if (slot != null)
+        {
+            // Nest the material under the slot so it inherits the slot's position and scale.
+            Transform t = material.transform;
+            t.SetParent(slot, worldPositionStays: false);
+            t.localPosition = Vector3.zero;
+            t.localRotation = Quaternion.identity;
+            t.localScale = Vector3.one;
+        }
+        else
+        {
+            // No slot wired: fall back to snapping onto the printer's own position.
+            material.transform.position = transform.position;
+        }
 
-        // Freeze the object so it can't be dragged back out of the loaded slot.
+        // Lock the object in: it can no longer be clicked or dragged back out. Disable the drag
+        // behaviour and every collider so it stops receiving mouse and trigger events, while its
+        // sprite stays visible in the printer until it is consumed at Start.
         if (material.TryGetComponent(out InteractableObject interactable))
             interactable.enabled = false;
+
+        foreach (Collider2D col in material.GetComponents<Collider2D>())
+            col.enabled = false;
     }
 
     private void ConsumeLoadedMaterials()
