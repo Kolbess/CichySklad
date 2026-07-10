@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -48,8 +49,16 @@ public class CutscenePlayer : MonoBehaviour
 
     private void Start()
     {
+        // Defer one frame so other Start()s run first — notably DialogueSystem.Start, which hides the
+        // box on load and would otherwise swallow the demo's first line if we played it here directly.
         if (_demoCutscene != null)
-            Play(_demoCutscene);
+            StartCoroutine(PlayDemoNextFrame());
+    }
+
+    private IEnumerator PlayDemoNextFrame()
+    {
+        yield return null;
+        Play(_demoCutscene);
     }
 
     private void Update()

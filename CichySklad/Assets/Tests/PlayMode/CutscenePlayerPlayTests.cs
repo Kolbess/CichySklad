@@ -124,6 +124,30 @@ public class CutscenePlayerPlayTests : PlayModeTestBase
     }
 
     [UnityTest]
+    public IEnumerator DemoCutscene_AutoPlays_WithFirstLineVisible()
+    {
+        DialogueSystem dialogue = BuildDialogue(out GameObject box, out _);
+        CutscenePlayer player = AddInactive<CutscenePlayer>(out _, "CutscenePlayer");
+        SetField(player, "_dialogueSystem", dialogue);
+        SetField(
+            player,
+            "_demoCutscene",
+            NewCutscene(new CutsceneLine("maria", "Demo 1"), new CutsceneLine("kowal", "Demo 2"))
+        );
+        Activate(player);
+
+        // Two frames: Start schedules the demo, then it plays after DialogueSystem.Start hid the box.
+        yield return null;
+        yield return null;
+
+        Assert.IsTrue(player.IsPlaying, "The demo cutscene auto-plays.");
+        Assert.IsTrue(
+            box.activeSelf,
+            "The first line stays visible — not swallowed by DialogueSystem.Start."
+        );
+    }
+
+    [UnityTest]
     public IEnumerator LockedBox_IgnoresExternalShowDialogue()
     {
         DialogueSystem dialogue = BuildDialogue(out GameObject box, out _);
