@@ -70,6 +70,13 @@ public class DialogueSystem : MonoBehaviour
     [SerializeField]
     private Sprite _neighbourSprite;
 
+    // While locked, a CutscenePlayer owns the box; external ShowDialogue* calls are ignored so events
+    // cannot overwrite or hide a cutscene mid-playback.
+    private bool _locked;
+
+    /// <summary>Whether the box is currently reserved by a cutscene and ignoring external calls.</summary>
+    public bool IsLocked => _locked;
+
     private void Awake()
     {
         Assert.IsNotNull(
@@ -99,18 +106,26 @@ public class DialogueSystem : MonoBehaviour
         _dialogueBox.SetActive(false);
     }
 
-    /// <summary>Shows a plain dialogue line that auto-hides after <see cref="_autoHideSeconds"/>.</summary>
+    /// <summary>Shows a plain dialogue line that auto-hides after <see cref="_autoHideSeconds"/>.
+    /// Ignored while a cutscene holds the box (see <see cref="IsLocked"/>).</summary>
     public void ShowDialogue(string text, Sprite portrait = null)
     {
+        if (_locked)
+            return;
+
         OpenWith(text, portrait);
         ClearChoices();
         CancelInvoke(nameof(HideDialogue));
         Invoke(nameof(HideDialogue), _autoHideSeconds);
     }
 
-    /// <summary>Shows a dialogue with a row of choice buttons; hides when a choice is picked.</summary>
+    /// <summary>Shows a dialogue with a row of choice buttons; hides when a choice is picked.
+    /// Ignored while a cutscene holds the box (see <see cref="IsLocked"/>).</summary>
     public void ShowDialogueWithChoices(string text, Choice[] choices, Sprite portrait = null)
     {
+        if (_locked)
+            return;
+
         OpenWith(text, portrait);
         ClearChoices();
 
@@ -129,6 +144,24 @@ public class DialogueSystem : MonoBehaviour
             });
         }
     }
+
+    /// <summary>
+    /// Presents a single cutscene line: opens the box with a portrait, clears any choices, and does
+    /// NOT auto-hide — a <see cref="CutscenePlayer"/> drives advancement. Bypasses the lock so the
+    /// owning cutscene can keep updating the box.
+    /// </summary>
+    public void ShowLine(string text, Sprite portrait = null)
+    {
+        OpenWith(text, portrait);
+        ClearChoices();
+        CancelInvoke(nameof(HideDialogue));
+    }
+
+    /// <summary>Hides the dialogue box immediately (used by a cutscene when it ends without choices).</summary>
+    public void Hide() => HideDialogue();
+
+    /// <summary>Reserves (or releases) the box for a cutscene so external calls are ignored.</summary>
+    public void SetLocked(bool locked) => _locked = locked;
 
     public Sprite GetPortraitSprite(string characterName)
     {
