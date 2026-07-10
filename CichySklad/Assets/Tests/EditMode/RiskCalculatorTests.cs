@@ -63,4 +63,36 @@ public class RiskCalculatorTests
             RiskCalculator.DecayMultiplier(RiskLevel.Critical, 1.0f, 0.75f, 0.5f, 0.25f)
         );
     }
+
+    [Test]
+    public void PaymentForRisk_LowPaysMin_CriticalPaysMax()
+    {
+        Assert.AreEqual(1, RiskCalculator.PaymentForRisk(RiskLevel.Low, 1, 5));
+        Assert.AreEqual(5, RiskCalculator.PaymentForRisk(RiskLevel.Critical, 1, 5));
+    }
+
+    [Test]
+    public void PaymentForRisk_RisesMonotonicallyAcrossBands_WithinRange()
+    {
+        int low = RiskCalculator.PaymentForRisk(RiskLevel.Low, 1, 5);
+        int medium = RiskCalculator.PaymentForRisk(RiskLevel.Medium, 1, 5);
+        int high = RiskCalculator.PaymentForRisk(RiskLevel.High, 1, 5);
+        int critical = RiskCalculator.PaymentForRisk(RiskLevel.Critical, 1, 5);
+
+        Assert.LessOrEqual(low, medium);
+        Assert.LessOrEqual(medium, high);
+        Assert.LessOrEqual(high, critical);
+
+        foreach (int pay in new[] { low, medium, high, critical })
+        {
+            Assert.GreaterOrEqual(pay, 1);
+            Assert.LessOrEqual(pay, 5);
+        }
+    }
+
+    [Test]
+    public void PaymentForRisk_InvertedRange_IsFlatMinimum()
+    {
+        Assert.AreEqual(3, RiskCalculator.PaymentForRisk(RiskLevel.Critical, 3, 1));
+    }
 }

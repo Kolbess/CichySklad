@@ -52,4 +52,21 @@ public static class RiskCalculator
                 return lowMultiplier;
         }
     }
+
+    /// <summary>
+    /// Coins a courier pays for a delivery, scaled by the current risk band: the four
+    /// <see cref="RiskLevel"/>s spread evenly across <paramref name="minPayment"/>..
+    /// <paramref name="maxPayment"/> (rounded to the nearest coin), so a riskier run pays more.
+    /// An inverted range is treated as a flat <paramref name="minPayment"/>.
+    /// </summary>
+    public static int PaymentForRisk(RiskLevel level, int minPayment, int maxPayment)
+    {
+        if (maxPayment < minPayment)
+            maxPayment = minPayment;
+
+        int span = maxPayment - minPayment;
+        int index = (int)level; // Low = 0 .. Critical = 3
+        int offset = (int)((double)span * index / 3.0 + 0.5);
+        return minPayment + offset;
+    }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -87,6 +88,9 @@ public class DayCycle : MonoBehaviour
     private bool _eventA;
     private bool _eventB;
     private bool _gameOver;
+
+    /// <summary>Raised at the start of each new day, carrying the new day number (1, 2, 3, ...).</summary>
+    public event Action<int> OnDayStarted;
 
     public bool IsGameOver => _gameOver;
 
@@ -222,6 +226,7 @@ public class DayCycle : MonoBehaviour
     {
         _currentDay += 1;
         _timer = 0f;
+        OnDayStarted?.Invoke(_currentDay);
         DisplayDayScreen();
 
         int randomMultiplier = Random.Range(0, 10);
