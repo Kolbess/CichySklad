@@ -64,7 +64,19 @@ public class RiskManager : MonoBehaviour
     [SerializeField]
     private float _criticalRiskDecayMultiplier = 0.25f;
 
+    [Header("Decay Freeze")]
+    [Tooltip(
+        "Seconds risk is held after ANY increase before automatic decay resumes; another increase "
+            + "refreshes it. Explicit ReduceRisk (player choices) ignores this. 0 = decay immediately."
+    )]
+    [SerializeField]
+    private float _decayFreezeSeconds = 15f;
+
     private RiskLevel _currentRiskLevel = RiskLevel.Low;
+
+    // Seconds since risk last went up. Starts large so decay is allowed until the first increase
+    // resets it to zero (which begins the hold).
+    private float _timeSinceIncrease = float.MaxValue;
 
     /// <summary>Raised whenever the numeric risk value changes.</summary>
     public event Action<float> OnRiskChanged;
@@ -94,11 +106,20 @@ public class RiskManager : MonoBehaviour
 
         if (_riskDecayRate < 0f)
             _riskDecayRate = 0f;
+
+        if (_decayFreezeSeconds < 0f)
+            _decayFreezeSeconds = 0f;
     }
 
     private void Update()
     {
+        _timeSinceIncrease += Time.deltaTime;
+
         if (_currentRisk <= 0f)
+            return;
+
+        // Hold the risk for a beat after any increase so the spike is felt before it bleeds off.
+        if (!RiskCalculator.CanDecay(_timeSinceIncrease, _decayFreezeSeconds))
             return;
 
         float multiplier = RiskCalculator.DecayMultiplier(
@@ -117,7 +138,14 @@ public class RiskManager : MonoBehaviour
 
     public void SetRisk(float amount)
     {
+        float previous = _currentRisk;
         _currentRisk = Mathf.Clamp(amount, 0f, _maxRisk);
+
+        // Any genuine increase (re)starts the decay-freeze hold; decreases (decay, player choices)
+        // leave it running so explicit reductions are never blocked.
+        if (_currentRisk > previous)
+            _timeSinceIncrease = 0f;
+
         OnRiskChanged?.Invoke(_currentRisk);
         CheckRiskLevel();
     }

@@ -95,4 +95,20 @@ public class RiskCalculatorTests
     {
         Assert.AreEqual(3, RiskCalculator.PaymentForRisk(RiskLevel.Critical, 3, 1));
     }
+
+    [Test]
+    public void CanDecay_IsFalseDuringFreeze_TrueOnceItElapses()
+    {
+        Assert.IsFalse(RiskCalculator.CanDecay(0f, 15f), "Just increased → still frozen.");
+        Assert.IsFalse(RiskCalculator.CanDecay(14.9f, 15f));
+        Assert.IsTrue(RiskCalculator.CanDecay(15f, 15f), "The hold is inclusive at its end.");
+        Assert.IsTrue(RiskCalculator.CanDecay(20f, 15f));
+    }
+
+    [Test]
+    public void CanDecay_WithZeroFreeze_AlwaysAllowsDecay()
+    {
+        Assert.IsTrue(RiskCalculator.CanDecay(0f, 0f));
+        Assert.IsTrue(RiskCalculator.CanDecay(5f, 0f));
+    }
 }

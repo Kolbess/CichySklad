@@ -69,4 +69,13 @@ public static class RiskCalculator
         int offset = (int)((double)span * index / 3.0 + 0.5);
         return minPayment + offset;
     }
+
+    /// <summary>
+    /// Whether automatic risk decay is allowed yet. After an increase, risk is held for
+    /// <paramref name="freezeSeconds"/> before it may start bleeding off, so decay is permitted only
+    /// once <paramref name="timeSinceLastIncrease"/> has reached that hold. A freeze of 0 always
+    /// permits decay.
+    /// </summary>
+    public static bool CanDecay(float timeSinceLastIncrease, float freezeSeconds) =>
+        timeSinceLastIncrease >= freezeSeconds;
 }

@@ -82,6 +82,7 @@ public class RiskManagerPlayTests : PlayModeTestBase
     public IEnumerator Risk_DecaysTowardZeroOverFrames()
     {
         RiskManager risk = BuildRiskManager();
+        SetField(risk, "_decayFreezeSeconds", 0f); // isolate decay from the freeze hold
         risk.SetRisk(20f);
         float before = risk.CurrentRisk;
 
@@ -91,6 +92,69 @@ public class RiskManagerPlayTests : PlayModeTestBase
 
         Assert.Less(risk.CurrentRisk, before, "Risk should bleed off over time.");
         Assert.GreaterOrEqual(risk.CurrentRisk, 0f);
+    }
+
+    [UnityTest]
+    public IEnumerator Risk_HoldsDuringFreeze_ThenDecays()
+    {
+        RiskManager risk = BuildFrozenRiskManager(freeze: 0.5f);
+        risk.SetRisk(20f); // starts the hold
+
+        yield return Advance(0.2f); // still inside the freeze
+        Assert.AreEqual(20f, risk.CurrentRisk, 0.001f, "Risk holds during the freeze.");
+
+        yield return Advance(0.6f); // past the freeze — decay resumes
+        Assert.Less(risk.CurrentRisk, 20f, "Risk bleeds off once the freeze elapses.");
+    }
+
+    [UnityTest]
+    public IEnumerator Increase_DuringFreeze_RefreshesTheHold()
+    {
+        RiskManager risk = BuildFrozenRiskManager(freeze: 0.5f);
+        risk.SetRisk(20f);
+
+        yield return Advance(0.35f); // partway through the first hold
+        risk.AddRisk(10f); // a fresh increase → the hold restarts from here
+
+        yield return Advance(0.35f); // < 0.5s since the refresh, so still held
+        Assert.AreEqual(30f, risk.CurrentRisk, 0.001f, "A new increase refreshes the freeze.");
+
+        yield return Advance(0.4f); // now past the refreshed hold
+        Assert.Less(risk.CurrentRisk, 30f, "Decay resumes after the refreshed freeze.");
+    }
+
+    [Test]
+    public void ExplicitReduce_IgnoresTheFreeze()
+    {
+        RiskManager risk = BuildFrozenRiskManager(freeze: 10f);
+        risk.SetRisk(20f); // frozen for 10s
+
+        risk.ReduceRisk(5f); // an explicit player-choice reduction
+
+        Assert.AreEqual(
+            15f,
+            risk.CurrentRisk,
+            0.001f,
+            "Explicit reductions apply immediately, regardless of the freeze."
+        );
+    }
+
+    private RiskManager BuildFrozenRiskManager(float freeze)
+    {
+        RiskManager risk = AddInactive<RiskManager>(out _, "RiskManager");
+        SetField(risk, "_decayFreezeSeconds", freeze);
+        Activate(risk);
+        return risk;
+    }
+
+    private static IEnumerator Advance(float seconds)
+    {
+        float elapsed = 0f;
+        while (elapsed < seconds)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
     }
 
     [Test]
