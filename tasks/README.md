@@ -22,7 +22,7 @@ Criteria) i Definicją Ukończenia (DoD).
 - ✅ [B6](B6-event-pack-1.md) — Pakiet eventów 1 (10 sytuacji rozgrywkowych)
 - ✅ [B7](B7-story-pack-2.md) — Pakiet fabularny 2 (Maria, Pan Kowal, dylematy moralne)
 - ✅ [B8](B8-cutscenes.md) — System krótkich cutscenek tekstowych
-- [B9](B9-progression-unlocks.md) — Progresja i odblokowania narzędzi konspiracji
+- ✅ [B9](B9-progression-unlocks.md) — Progresja i odblokowania narzędzi konspiracji
 
 ### C. Sterowanie i UX (P2)
 - [C10](C10-gamepad.md) — Obsługa gamepada (Input System)

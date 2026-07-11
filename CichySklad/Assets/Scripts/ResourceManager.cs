@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 /// <summary>
 /// Runtime view/adapter for the pure <see cref="ResourceLedger"/>. The ledger owns the accounting
@@ -143,6 +145,9 @@ public class ResourceManager : MonoBehaviour
     public int Money => _ledger.Money;
     public int Trust => _ledger.Trust;
 
+    /// <summary>Raised with the new trust value whenever trust changes — used to drive progression.</summary>
+    public event Action<int> OnTrustChanged;
+
     private void OnValidate()
     {
         if (_itemsPerPackage < 1)
@@ -250,6 +255,7 @@ public class ResourceManager : MonoBehaviour
         if (type == ResourceType.Trust)
         {
             UpdateTrust();
+            OnTrustChanged?.Invoke(current);
             return;
         }
 

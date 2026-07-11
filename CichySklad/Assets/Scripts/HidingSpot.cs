@@ -53,6 +53,7 @@ public class HidingSpot : MonoBehaviour
     private Material _material;
 
     public IReadOnlyList<InteractableObject> Objects => _objects;
+    public int MaxCapacity => _maxCapacity;
 
     private void OnValidate()
     {
@@ -101,6 +102,17 @@ public class HidingSpot : MonoBehaviour
     {
         if (_objects.Remove(interactableObject))
             UpdateCapacity();
+    }
+
+    /// <summary>Permanently enlarges the stash (a progression unlock — "better hiding spot"), and
+    /// refreshes the capacity readout. Non-positive amounts are ignored.</summary>
+    public void IncreaseCapacity(int extra)
+    {
+        if (extra <= 0)
+            return;
+
+        _maxCapacity += extra;
+        UpdateCapacity();
     }
 
     private void OnMouseEnter()
